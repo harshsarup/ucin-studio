@@ -3,26 +3,23 @@ import { Reveal } from '@/components/Reveal'
 
 export function CTA() {
   return (
-    <section className="py-28 relative overflow-hidden">
-      <div className="absolute inset-0 bg-plum-glow" />
-      <div className="absolute inset-0 bg-warm-glow" />
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <section className="py-40 relative overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 50% 70% at 50% 100%, rgba(139,92,246,0.14), transparent 70%)' }}
+      />
+      <div className="relative max-w-3xl mx-auto px-6 text-center">
         <Reveal>
-          <h2 className="font-display font-light text-fg leading-[1.05]" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-            Stop grinding the post.<br />
-            <span className="text-gradient">Start shipping the work.</span>
+          <h2 className="h-display" style={{ fontSize: 'clamp(2.6rem, 6.5vw, 4.8rem)' }}>
+            Get your<br /><span className="text-plum">time back.</span>
           </h2>
-          <p className="mt-5 text-lg text-fg-muted max-w-xl mx-auto leading-relaxed">
-            Hand your backlog to your AI production partner and get your time back.
-            First results in under two minutes.
+          <p className="mt-7 text-xl text-fg-muted max-w-lg mx-auto leading-relaxed">
+            Hand your backlog to your production partner. First results in under two minutes.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href="/app?signup=1" className="btn-primary px-7 py-3.5 text-[15px]">
-              Start creating free <ArrowRight size={16} />
-            </a>
-            <a href="#pricing" className="btn-ghost px-7 py-3.5 text-[15px]">See pricing</a>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <a href="/app?signup=1" className="btn-primary">Start creating free <ArrowRight size={16} /></a>
+            <a href="#pricing" className="link-arrow">See pricing ›</a>
           </div>
-          <p className="mt-6 text-xs text-fg-faint">No card required · Pay only for results · Cancel anytime</p>
         </Reveal>
       </div>
     </section>

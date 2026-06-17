@@ -4,28 +4,25 @@ import { BEFORE_AFTER } from '@/lib/samples'
 
 export function Showcase() {
   return (
-    <section className="py-24 relative">
-      <div className="absolute inset-0 grid-texture opacity-40" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-        <Reveal className="max-w-2xl mb-12">
-          <div className="eyebrow mb-4">Drag to compare</div>
-          <h2 className="font-display font-light text-fg leading-[1.06]" style={{ fontSize: 'clamp(1.9rem, 4vw, 2.9rem)' }}>
-            The output speaks<br /><span className="text-gradient">for itself.</span>
+    <section className="py-32 sm:py-40">
+      <div className="max-w-6xl mx-auto px-6">
+        <Reveal className="max-w-3xl mb-16">
+          <div className="eyebrow mb-5">The work</div>
+          <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
+            Proof, not promises.
           </h2>
-          <p className="mt-4 text-fg-muted leading-relaxed">
-            Real results, at batch scale. Drag the handle on any of these to see the difference.
+          <p className="mt-6 text-lg text-fg-muted leading-relaxed max-w-xl">
+            Real output, at batch scale. Drag any handle to see the difference.
           </p>
         </Reveal>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-6">
           {BEFORE_AFTER.map((s, i) => (
             <Reveal key={s.id} delay={i * 0.1}>
-              <div className="card p-2">
-                <BeforeAfter before={s.before} after={s.after} />
-                <div className="px-3 py-2.5">
-                  <div className="text-sm font-semibold text-fg">{s.label}</div>
-                  <div className="text-xs text-fg-subtle mt-0.5">{s.caption}</div>
-                </div>
+              <BeforeAfter before={s.before} after={s.after} />
+              <div className="mt-4">
+                <div className="text-[15px] font-semibold text-fg">{s.label}</div>
+                <div className="text-sm text-fg-subtle mt-0.5">{s.caption}</div>
               </div>
             </Reveal>
           ))}

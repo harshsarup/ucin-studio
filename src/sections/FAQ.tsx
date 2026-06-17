@@ -3,40 +3,36 @@ import { Plus, Minus } from 'lucide-react'
 import { Reveal } from '@/components/Reveal'
 
 const QA = [
-  { q: 'Do I need any software or technical setup?', a: 'No. There is nothing to install and no infrastructure to manage. You send us your files through the browser, pick what you want done, and download the finished results. We handle all the AI and compute behind the scenes.' },
-  { q: 'How is it cheaper than the tools I already use?', a: 'You pay per result — and every result is priced 20–40% under the dominant tool in its category (Cloudinary, Remove.bg, AWS, DALL·E). No subscription is required to start, so you only pay for what we actually deliver.' },
-  { q: 'What is Brand-Style?', a: 'Upload a set of your best work and we learn your signature aesthetic — colour, grade, composition. Then every generated visual and every batch we finish comes back in your look, automatically. It is the consistency a brand needs at the scale a studio runs.' },
+  { q: 'Do I have to manage any technology?', a: 'Never. There are no pipelines to build, no models to train, no servers to run. You work through a simple interface and we handle all of the AI and compute behind it. Managing none of it is the entire point of a production partner.' },
+  { q: 'How is it cheaper than the tools I already use?', a: 'You pay per result, and every result is priced 20–40% under the dominant tool in its category — Cloudinary, Remove.bg, AWS, DALL·E. There is no subscription required to start, so you only pay for work we actually deliver.' },
+  { q: 'What is Brand-Style?', a: 'Send us a set of your best work and we learn your signature aesthetic — colour, grade, composition. From then on every visual we generate and every batch we finish comes back in your look, automatically. The consistency a brand needs, at the scale a studio runs.' },
   { q: 'Is my work private and secure?', a: 'Yes. Your assets are encrypted before they leave your device and processed on India-resident infrastructure. Your files and your trained styles are yours alone.' },
-  { q: 'How many files can I process at once?', a: 'Thousands. We process your batch in parallel, so a folder of 5,000 photos finishes in minutes, not days.' },
+  { q: 'How much can I process at once?', a: 'Thousands of files in a single batch. We process everything in parallel, so a folder of 5,000 photos finishes in minutes, not days.' },
 ]
 
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(0)
   return (
-    <section className="py-24 relative">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <Reveal className="text-center mb-12">
-          <div className="eyebrow mb-4 justify-center flex">Questions</div>
-          <h2 className="font-display font-light text-fg leading-[1.06]" style={{ fontSize: 'clamp(1.9rem, 4vw, 2.7rem)' }}>
-            Good to know
-          </h2>
+    <section className="py-32 sm:py-40">
+      <div className="max-w-3xl mx-auto px-6">
+        <Reveal className="mb-14">
+          <div className="eyebrow mb-5">Questions</div>
+          <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.2rem)' }}>Good to know</h2>
         </Reveal>
-        <div className="space-y-3">
+        <div className="divide-y divide-canvas-border border-y border-canvas-border">
           {QA.map((item, i) => (
-            <Reveal key={i} delay={i * 0.05}>
-              <div className="card overflow-hidden">
-                <button
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
-                >
-                  <span className="text-sm font-medium text-fg">{item.q}</span>
-                  {open === i ? <Minus size={16} className="text-plum-300 shrink-0" /> : <Plus size={16} className="text-fg-subtle shrink-0" />}
-                </button>
-                {open === i && (
-                  <div className="px-5 pb-4 text-sm text-fg-subtle leading-relaxed">{item.a}</div>
-                )}
-              </div>
-            </Reveal>
+            <div key={i}>
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full flex items-center justify-between gap-6 py-5 text-left"
+              >
+                <span className="text-[17px] font-medium text-fg">{item.q}</span>
+                {open === i ? <Minus size={18} className="text-plum-300 shrink-0" /> : <Plus size={18} className="text-fg-subtle shrink-0" />}
+              </button>
+              {open === i && (
+                <p className="pb-6 -mt-1 text-[15px] text-fg-subtle leading-relaxed max-w-2xl">{item.a}</p>
+              )}
+            </div>
           ))}
         </div>
       </div>

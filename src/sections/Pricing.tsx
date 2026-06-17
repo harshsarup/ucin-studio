@@ -5,80 +5,80 @@ const PAYG = [
   'Every result priced per item',
   '20–40% under Cloudinary, Remove.bg, AWS & DALL·E',
   'No monthly fee — pay only for what we deliver',
-  'All tasks unlocked',
+  'Every task unlocked',
 ]
 
 const POWER = [
-  'Everything in Pay-as-you-go',
-  'Brand-Style training — your signature look',
+  'Everything in pay-as-you-go',
+  'Brand-Style — your signature look, trained',
   'Included results every month',
   'Member pricing on every job',
-  'Priority production queue',
+  'Priority production',
 ]
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <Reveal className="text-center max-w-2xl mx-auto mb-14">
-          <div className="eyebrow mb-4 justify-center flex">Pricing</div>
-          <h2 className="font-display font-light text-fg leading-[1.06]" style={{ fontSize: 'clamp(1.9rem, 4vw, 2.9rem)' }}>
-            Pay for results.<br /><span className="text-gradient">Never for setup.</span>
+    <section id="pricing" className="py-32 sm:py-40">
+      <div className="max-w-5xl mx-auto px-6">
+        <Reveal className="text-center max-w-2xl mx-auto mb-16">
+          <div className="eyebrow mb-5 justify-center flex">Pricing</div>
+          <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
+            You pay for finished work.<br /><span className="text-fg-subtle">Nothing else.</span>
           </h2>
-          <p className="mt-4 text-fg-muted leading-relaxed">
-            Start free and pay per outcome. Add a Power Pass when you want your own style and
-            member pricing. No contracts, cancel anytime.
+          <p className="mt-6 text-lg text-fg-muted leading-relaxed">
+            Start free and pay per result. Add a Power Pass when you want your own style and
+            member pricing. No contracts.
           </p>
         </Reveal>
 
-        <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-5">
           {/* PAYG */}
           <Reveal>
-            <div className="card p-7 h-full flex flex-col">
-              <div className="text-sm font-semibold text-fg-subtle">Pay as you go</div>
-              <div className="mt-2 mb-1">
-                <span className="text-4xl font-bold text-fg">₹0</span>
-                <span className="text-fg-subtle text-sm"> to start</span>
+            <div className="card p-8 h-full flex flex-col">
+              <div className="text-sm font-medium text-fg-subtle">Pay as you go</div>
+              <div className="mt-3 mb-1">
+                <span className="text-5xl font-semibold text-fg tracking-tight">₹0</span>
+                <span className="text-fg-subtle"> to start</span>
               </div>
-              <p className="text-xs text-fg-subtle mb-6">Then just pay per result — from ₹0.10 each.</p>
-              <ul className="space-y-3 mb-7 flex-1">
+              <p className="text-sm text-fg-subtle mb-8">Then from ₹0.10 per result.</p>
+              <ul className="space-y-3.5 mb-8 flex-1">
                 {PAYG.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-fg-muted">
-                    <Check size={15} className="text-emerald-400 mt-0.5 shrink-0" /> {f}
+                  <li key={i} className="flex items-start gap-3 text-[15px] text-fg-muted">
+                    <Check size={16} className="text-fg-subtle mt-0.5 shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
-              <a href="/app?signup=1" className="btn-ghost w-full py-3">Start free <ArrowRight size={15} /></a>
+              <a href="/app?signup=1" className="btn-ghost w-full">Start free</a>
             </div>
           </Reveal>
 
           {/* Power Pass */}
           <Reveal delay={0.1}>
-            <div className="card p-7 h-full flex flex-col relative shadow-glow-plum" style={{ borderColor: 'rgba(139,92,246,0.4)' }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="badge badge-plum">Most popular</span>
+            <div className="card p-8 h-full flex flex-col" style={{ borderColor: '#3A2D52', background: '#120E1B' }}>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-plum-300">Power Pass</div>
+                <span className="text-xs text-plum-300 font-mono">Most popular</span>
               </div>
-              <div className="text-sm font-semibold text-plum-300">Power Pass</div>
-              <div className="mt-2 mb-1">
-                <span className="text-4xl font-bold text-fg">₹999</span>
-                <span className="text-fg-subtle text-sm">/month</span>
+              <div className="mt-3 mb-1">
+                <span className="text-5xl font-semibold text-fg tracking-tight">₹999</span>
+                <span className="text-fg-subtle">/mo</span>
               </div>
-              <p className="text-xs text-fg-subtle mb-6">For studios shipping on-brand work at volume.</p>
-              <ul className="space-y-3 mb-7 flex-1">
+              <p className="text-sm text-fg-subtle mb-8">For studios shipping on-brand work at volume.</p>
+              <ul className="space-y-3.5 mb-8 flex-1">
                 {POWER.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-fg-muted">
-                    <Check size={15} className="text-plum-300 mt-0.5 shrink-0" /> {f}
+                  <li key={i} className="flex items-start gap-3 text-[15px] text-fg-muted">
+                    <Check size={16} className="text-plum-300 mt-0.5 shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
-              <a href="/app?signup=1&plan=power" className="btn-primary w-full py-3">Get Power Pass <ArrowRight size={15} /></a>
+              <a href="/app?signup=1&plan=power" className="btn-primary w-full">Get Power Pass <ArrowRight size={15} /></a>
             </div>
           </Reveal>
         </div>
 
         <Reveal delay={0.2} className="text-center mt-8">
-          <p className="text-xs text-fg-faint">
-            Bigger studio? <a href="mailto:hello@ucin.in" className="text-plum-300 hover:text-plum-200">Talk to us</a> about volume plans.
+          <p className="text-sm text-fg-faint">
+            Bigger studio? <a href="mailto:hello@ucin.in" className="link-arrow">Talk to us ›</a>
           </p>
         </Reveal>
       </div>

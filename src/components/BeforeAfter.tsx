@@ -29,7 +29,12 @@ export function BeforeAfter({
     >
       {/* After (full) */}
       <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-      <span className="absolute top-3 right-3 badge badge-plum">{afterLabel}</span>
+      <span
+        className="absolute top-3 right-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
+        style={{ background: 'rgba(139,92,246,0.85)', color: '#fff', backdropFilter: 'blur(4px)' }}
+      >
+        {afterLabel}
+      </span>
 
       {/* Before (clipped) */}
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
@@ -39,7 +44,10 @@ export function BeforeAfter({
           style={{ width: ref.current?.clientWidth ?? '100%' }}
           draggable={false}
         />
-        <span className="absolute top-3 left-3 badge" style={{ background: 'rgba(11,9,16,0.7)', color: '#C3BBD0', border: '1px solid #271F33' }}>
+        <span
+          className="absolute top-3 left-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
+          style={{ background: 'rgba(8,7,12,0.7)', color: '#C3BBD0', backdropFilter: 'blur(4px)' }}
+        >
           {beforeLabel}
         </span>
       </div>

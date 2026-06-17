@@ -1,86 +1,66 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { BeforeAfter } from '@/components/BeforeAfter'
 import { BEFORE_AFTER } from '@/lib/samples'
+
+const ease = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
   const sample = BEFORE_AFTER[0]
   return (
-    <section id="top" className="relative pt-32 pb-20 overflow-hidden">
-      <div className="absolute inset-0 bg-plum-glow" />
-      <div className="absolute inset-0 bg-warm-glow" />
-      <div className="absolute inset-0 grid-texture opacity-60" />
+    <section id="top" className="relative pt-40 pb-24 overflow-hidden">
+      {/* one faint identity glow, nothing more */}
+      <div
+        className="absolute inset-x-0 top-0 h-[420px] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(139,92,246,0.14), transparent 70%)' }}
+      />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-10 items-center">
-          {/* Copy */}
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="eyebrow mb-5"
-            >
-              <Sparkles size={13} /> Your AI production partner
-            </motion.div>
+      <div className="relative max-w-5xl mx-auto px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}
+          className="eyebrow mb-6"
+        >
+          Your AI production partner
+        </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.05 }}
-              className="font-display font-light text-fg leading-[1.04]"
-              style={{ fontSize: 'clamp(2.5rem, 5.6vw, 4.3rem)' }}
-            >
-              Hand off the<br />
-              post-production.<br />
-              <span className="text-gradient font-normal">Keep creating.</span>
-            </motion.h1>
+        <motion.h1
+          initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05, ease }}
+          className="h-display"
+          style={{ fontSize: 'clamp(3rem, 8vw, 6rem)' }}
+        >
+          The studio behind<br /><span className="text-plum">your studio.</span>
+        </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.14 }}
-              className="mt-6 text-lg text-fg-muted leading-relaxed max-w-xl"
-            >
-              We handle the AI, the technology and the heavy lifting — upscaling, cut-outs,
-              generation, transcription, translation — across thousands of assets, in your
-              signature style. You stay focused on the work only you can do.
-            </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15, ease }}
+          className="mt-7 text-xl text-fg-muted leading-relaxed max-w-2xl mx-auto"
+        >
+          Hand us the upscaling, the cut-outs, the captions, the grade — every tedious hour
+          of post. We finish thousands of assets in your signature style, overnight. You stay
+          on the work that's yours alone.
+        </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.22 }}
-              className="mt-8 flex flex-wrap items-center gap-3"
-            >
-              <a href="/app?signup=1" className="btn-primary px-6 py-3 text-[15px]">
-                Start creating free <ArrowRight size={16} />
-              </a>
-              <a href="#handle" className="btn-ghost px-6 py-3 text-[15px]">See what we handle</a>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.32 }}
-              className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-fg-subtle"
-            >
-              <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-emerald-400" /> Pay per result — cheaper than your tools</span>
-              <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-emerald-400" /> No setup, no software</span>
-              <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-emerald-400" /> Encrypted &amp; India-resident</span>
-            </motion.div>
-          </div>
-
-          {/* Before/after visual */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative"
-          >
-            <div className="absolute -inset-4 bg-plum-glow blur-2xl opacity-60" />
-            <div className="relative card p-2 shadow-glow-plum">
-              <BeforeAfter before={sample.before} after={sample.after} />
-              <div className="flex items-center justify-between px-3 py-2.5">
-                <span className="text-xs text-fg-subtle">{sample.caption}</span>
-                <span className="badge badge-emerald">−25% vs Cloudinary</span>
-              </div>
-            </div>
-            <div className="absolute -bottom-4 -left-4 card px-3.5 py-2.5 hidden sm:flex items-center gap-2 animate-float">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-fg-muted font-mono">5,000 photos · 2.1 min</span>
-            </div>
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease }}
+          className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3"
+        >
+          <a href="/app?signup=1" className="btn-primary">Start creating free <ArrowRight size={16} /></a>
+          <a href="#handle" className="link-arrow">See what we handle ›</a>
+        </motion.div>
       </div>
+
+      {/* the hero object: a single, large before/after */}
+      <motion.div
+        initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.3, ease }}
+        className="relative max-w-4xl mx-auto px-6 mt-20"
+      >
+        <BeforeAfter before={sample.before} after={sample.after} />
+        <div className="mt-4 flex items-center justify-center gap-3 text-sm text-fg-subtle">
+          <span>{sample.caption}</span>
+          <span className="text-fg-faint">·</span>
+          <span>25% under Cloudinary</span>
+        </div>
+      </motion.div>
     </section>
   )
 }
