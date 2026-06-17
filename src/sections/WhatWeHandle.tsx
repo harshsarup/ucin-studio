@@ -35,13 +35,13 @@ export function WhatWeHandle() {
           </p>
         </Reveal>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-3xl overflow-hidden" style={{ background: '#1C1726' }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-3xl overflow-hidden border border-canvas-border" style={{ background: '#E8E2D6' }}>
           {TASKS.map((t, i) => {
             const p = priced[t.action_id]
             return (
               <Reveal key={t.action_id} delay={i * 0.04}>
-                <div className="group h-full p-7 transition-colors duration-500" style={{ background: '#0F0D15' }}>
-                  <t.Icon size={22} className="text-plum-300 mb-5" strokeWidth={1.5} />
+                <div className="group h-full p-7 bg-white hover:bg-plum-50/60 transition-colors duration-300">
+                  <t.Icon size={22} className="text-plum-600 mb-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
                   <div className="text-[15px] font-semibold text-fg">{t.label}</div>
                   <div className="text-sm text-fg-subtle leading-snug mt-1.5">{t.benefit}</div>
                   {p && (

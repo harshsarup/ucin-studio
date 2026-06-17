@@ -3,7 +3,7 @@ import { Logo } from './Logo'
 export function Footer() {
   const year = 2026
   return (
-    <footer className="border-t border-canvas-border" style={{ background: '#0A0810' }}>
+    <footer className="border-t border-canvas-border" style={{ background: '#F1EDE6' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-2">

@@ -1,61 +1,73 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
+import { useInView } from 'framer-motion'
 
-/** Drag-to-reveal before/after slider — the signature creative-AI interaction. */
+/** Drag-to-reveal before/after slider. Auto-sweeps once on first view to invite
+ *  interaction — the signature creative-AI gesture, professionally restrained. */
 export function BeforeAfter({
   before, after, beforeLabel = 'Before', afterLabel = 'After',
 }: { before: string; after: string; beforeLabel?: string; afterLabel?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState(50)
   const dragging = useRef(false)
+  const touched = useRef(false)
+  const inView = useInView(ref, { once: true, margin: '-90px' })
 
   const update = useCallback((clientX: number) => {
     const el = ref.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    const p = ((clientX - r.left) / r.width) * 100
-    setPos(Math.max(0, Math.min(100, p)))
+    setPos(Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100)))
   }, [])
+
+  // one-time invitation sweep (cancels the moment the user touches it)
+  useEffect(() => {
+    if (!inView) return
+    const keys = [50, 80, 20, 50]
+    const dur = 1700, seg = dur / (keys.length - 1)
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      if (touched.current) return
+      const t = now - start
+      if (t >= dur) { setPos(50); return }
+      const i = Math.min(keys.length - 2, Math.floor(t / seg))
+      const lt = (t - i * seg) / seg
+      const e = lt < 0.5 ? 2 * lt * lt : 1 - Math.pow(-2 * lt + 2, 2) / 2
+      setPos(keys[i] + (keys[i + 1] - keys[i]) * e)
+      raf = requestAnimationFrame(tick)
+    }
+    const id = setTimeout(() => { raf = requestAnimationFrame(tick) }, 350)
+    return () => { clearTimeout(id); cancelAnimationFrame(raf) }
+  }, [inView])
+
+  const onDown = (x: number) => { touched.current = true; dragging.current = true; update(x) }
 
   return (
     <div
       ref={ref}
-      className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl border border-canvas-border select-none cursor-ew-resize"
-      onMouseDown={(e) => { dragging.current = true; update(e.clientX) }}
+      className="group relative w-full aspect-[4/3] overflow-hidden rounded-3xl select-none cursor-ew-resize border border-canvas-border"
+      style={{ boxShadow: '0 30px 70px -40px rgba(22,19,28,0.45)' }}
+      onMouseDown={(e) => onDown(e.clientX)}
       onMouseMove={(e) => dragging.current && update(e.clientX)}
       onMouseUp={() => { dragging.current = false }}
       onMouseLeave={() => { dragging.current = false }}
-      onTouchStart={(e) => update(e.touches[0].clientX)}
+      onTouchStart={(e) => onDown(e.touches[0].clientX)}
       onTouchMove={(e) => update(e.touches[0].clientX)}
     >
-      {/* After (full) */}
       <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-      <span
-        className="absolute top-3 right-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
-        style={{ background: 'rgba(139,92,246,0.85)', color: '#fff', backdropFilter: 'blur(4px)' }}
-      >
-        {afterLabel}
-      </span>
+      <span className="absolute top-3 right-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full text-white"
+        style={{ background: 'rgba(106,60,196,0.9)', backdropFilter: 'blur(4px)' }}>{afterLabel}</span>
 
-      {/* Before (clipped) */}
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-        <img
-          src={before} alt={beforeLabel}
-          className="absolute inset-0 h-full object-cover max-w-none"
-          style={{ width: ref.current?.clientWidth ?? '100%' }}
-          draggable={false}
-        />
-        <span
-          className="absolute top-3 left-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
-          style={{ background: 'rgba(8,7,12,0.7)', color: '#C3BBD0', backdropFilter: 'blur(4px)' }}
-        >
-          {beforeLabel}
-        </span>
+        <img src={before} alt={beforeLabel} className="absolute inset-0 h-full object-cover max-w-none"
+          style={{ width: ref.current?.clientWidth ?? '100%' }} draggable={false} />
+        <span className="absolute top-3 left-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
+          style={{ background: 'rgba(255,255,255,0.85)', color: '#46414E', backdropFilter: 'blur(4px)' }}>{beforeLabel}</span>
       </div>
 
-      {/* Handle */}
-      <div className="absolute top-0 bottom-0 w-0.5 bg-white/80" style={{ left: `${pos}%` }}>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white shadow-lg flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6A3CC4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div className="absolute top-0 bottom-0 w-0.5 bg-white" style={{ left: `${pos}%`, boxShadow: '0 0 12px rgba(0,0,0,0.25)' }}>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6A3CC4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18l-6-6 6-6M15 6l6 6-6 6" />
           </svg>
         </div>

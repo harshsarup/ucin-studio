@@ -25,7 +25,7 @@ export function HowItWorks() {
           {STEPS.map((s, i) => (
             <Reveal key={s.n} delay={i * 0.1}>
               <div className="md:border-l border-canvas-border md:pl-7">
-                <div className="text-plum-300 font-mono text-sm mb-4">0{s.n}</div>
+                <div className="text-plum-600 font-mono text-sm mb-4">0{s.n}</div>
                 <div className="text-xl font-semibold text-fg mb-2.5">{s.title}</div>
                 <p className="text-[15px] text-fg-subtle leading-relaxed">{s.body}</p>
               </div>

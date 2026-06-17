@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
+import { Marquee } from '@/components/Marquee'
 import { Hero } from '@/sections/Hero'
 import { WhatWeHandle } from '@/sections/WhatWeHandle'
 import { Showcase } from '@/sections/Showcase'
@@ -16,6 +17,7 @@ export function Landing() {
       <Navbar />
       <main>
         <Hero />
+        <Marquee />
         <WhatWeHandle />
         <Showcase />
         <BrandStyle />

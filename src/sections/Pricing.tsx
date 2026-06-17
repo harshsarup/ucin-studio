@@ -54,10 +54,10 @@ export function Pricing() {
 
           {/* Power Pass */}
           <Reveal delay={0.1}>
-            <div className="card p-8 h-full flex flex-col" style={{ borderColor: '#3A2D52', background: '#120E1B' }}>
+            <div className="card p-8 h-full flex flex-col" style={{ borderColor: '#D2BCEC', background: '#F6F1FC', boxShadow: '0 24px 56px -34px rgba(106,60,196,0.35)' }}>
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-plum-300">Power Pass</div>
-                <span className="text-xs text-plum-300 font-mono">Most popular</span>
+                <div className="text-sm font-medium text-plum-600">Power Pass</div>
+                <span className="text-xs text-plum-600 font-mono">Most popular</span>
               </div>
               <div className="mt-3 mb-1">
                 <span className="text-5xl font-semibold text-fg tracking-tight">₹999</span>
@@ -67,7 +67,7 @@ export function Pricing() {
               <ul className="space-y-3.5 mb-8 flex-1">
                 {POWER.map((f, i) => (
                   <li key={i} className="flex items-start gap-3 text-[15px] text-fg-muted">
-                    <Check size={16} className="text-plum-300 mt-0.5 shrink-0" /> {f}
+                    <Check size={16} className="text-plum-600 mt-0.5 shrink-0" /> {f}
                   </li>
                 ))}
               </ul>

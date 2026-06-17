@@ -28,7 +28,7 @@ export function Hero() {
           className="h-display"
           style={{ fontSize: 'clamp(3rem, 8vw, 6rem)' }}
         >
-          The studio behind<br /><span className="text-plum">your studio.</span>
+          The studio behind<br /><span className="text-shimmer">your studio.</span>
         </motion.h1>
 
         <motion.p
