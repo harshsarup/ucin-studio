@@ -1,19 +1,12 @@
 /**
  * Sample imagery for the marketing site.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- * PLACEHOLDERS NOW → REAL ASSETS LATER. This is the ONE place to swap them.
- *
- * To use real images, drop files into  ucin_studio/public/samples/  and change
- * the URLs below to e.g.  '/samples/upscale-before.jpg'.
- * See public/samples/README.md for the exact filenames + how to generate the
- * "after" images by running the "before" images through the UCIN platform.
- * ─────────────────────────────────────────────────────────────────────────────
+ * PLACEHOLDERS NOW → REAL ASSETS LATER. Swap the URLs here (or drop files into
+ * public/samples/ and point to '/samples/...'). See public/samples/README.md —
+ * the strongest version is real before/after pairs produced by running photos
+ * through the UCIN platform itself.
  */
-
-// Deterministic placeholder photos (look real, good for feel). Swap to /samples/*.
-const ph = (seed: string, w = 800, h = 600) =>
-  `https://picsum.photos/seed/${seed}/${w}/${h}`
+const ph = (seed: string, w = 900, h = 700) => `https://picsum.photos/seed/${seed}/${w}/${h}`
 
 export interface BeforeAfterSample {
   id: string
@@ -24,35 +17,23 @@ export interface BeforeAfterSample {
 }
 
 export const BEFORE_AFTER: BeforeAfterSample[] = [
-  {
-    id: 'upscale',
-    label: 'Upscale to 4K',
-    before: ph('ucin-upscale-b', 800, 600),
-    after: ph('ucin-upscale-a', 1600, 1200),
-    caption: 'Low-res export → crisp 4K, batch of 5,000',
-  },
-  {
-    id: 'remove-bg',
-    label: 'Remove background',
-    before: ph('ucin-rembg-b', 800, 600),
-    after: ph('ucin-rembg-a', 800, 600),
-    caption: 'Studio cut-outs for an entire product catalog',
-  },
-  {
-    id: 'style',
-    label: 'Brand-Style applied',
-    before: ph('ucin-style-b', 800, 600),
-    after: ph('ucin-style-a', 800, 600),
-    caption: 'Your signature grade, applied to every frame',
-  },
+  { id: 'upscale',   label: 'Upscale to 4K',      before: ph('ucin-up-b', 900, 675),  after: ph('ucin-up-a', 1800, 1350), caption: 'Low-res export → print-ready 4K · batch of 5,000' },
+  { id: 'remove-bg', label: 'Remove background',  before: ph('ucin-bg-b', 900, 675),  after: ph('ucin-bg-a', 900, 675),   caption: 'Studio cut-outs across a full product catalog' },
+  { id: 'style',     label: 'Brand-Style applied',before: ph('ucin-st-b', 900, 675),  after: ph('ucin-st-a', 900, 675),   caption: 'Your signature grade, applied to every frame' },
 ]
 
-// Generated-visuals gallery (Brand-Style / text-to-image showcase)
-export const GALLERY: string[] = [
-  ph('ucin-gen-1', 500, 500),
-  ph('ucin-gen-2', 500, 500),
-  ph('ucin-gen-3', 500, 500),
-  ph('ucin-gen-4', 500, 500),
-  ph('ucin-gen-5', 500, 500),
-  ph('ucin-gen-6', 500, 500),
+/** Editorial work grid — varied tiles. tall/wide drive the masonry rhythm. */
+export interface WorkTile { src: string; span: 'tall' | 'wide' | 'sq'; tag: string }
+
+export const WORK: WorkTile[] = [
+  { src: ph('ucin-w1', 800, 1100), span: 'tall', tag: 'Upscaled' },
+  { src: ph('ucin-w2', 1100, 800), span: 'wide', tag: 'Generated' },
+  { src: ph('ucin-w3', 800, 800),  span: 'sq',   tag: 'Cut-out' },
+  { src: ph('ucin-w4', 800, 800),  span: 'sq',   tag: 'Brand-Style' },
+  { src: ph('ucin-w5', 1100, 800), span: 'wide', tag: 'Restored' },
+  { src: ph('ucin-w6', 800, 1100), span: 'tall', tag: 'Generated' },
+  { src: ph('ucin-w7', 800, 800),  span: 'sq',   tag: 'Upscaled' },
+  { src: ph('ucin-w8', 800, 800),  span: 'sq',   tag: 'Brand-Style' },
 ]
+
+export const GALLERY: string[] = WORK.slice(0, 6).map((w) => w.src)

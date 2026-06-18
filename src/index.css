@@ -2,45 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ───────────────────────── Theme variables ─────────────────────────
-   :root = light. .dark = dark. Tailwind tokens point at these so every
-   surface + text colour switches with one class on <html>. */
+/* ─────────────────────────────────────────────────────────────────────
+   Art direction (committed): warm editorial light base, with dramatic
+   full-bleed dark moments scoped via `.dark-moment` (no global toggle —
+   Apple-style alternation). Tokens point at these CSS variables.
+   ───────────────────────────────────────────────────────────────────── */
 :root {
-  --bg:            #FAF9F6;
-  --sunk:          #F1EFE9;
-  --surface:       #FFFFFF;
-  --card:          #FFFFFF;
-  --border:        #E4DFD4;
-  --border-strong: #CFC8BA;
-  --fg:            #120F18;  /* near-black headings ~16:1 */
-  --fg-muted:      #242029;  /* body ~13:1 — strong, readable */
-  --fg-subtle:     #423D4B;  /* secondary ~8.5:1 */
-  --fg-faint:      #615B6D;  /* captions ~5.6:1 */
-  --accent:        #6A3CC4;  /* plum */
-  --tint:          #F3EEFB;
-  --tint-border:   #E5D9F5;
-  --grid:          rgba(106,60,196,0.055);
-  --nav-bg:        rgba(250,249,246,0.82);
-  --shadow:        rgba(22,19,28,0.18);
+  --bg:           #FBFAF7;
+  --surface:      #FFFFFF;
+  --card:         #FFFFFF;
+  --sunk:         #F2EFE8;
+  --border:       #E5DFD3;
+  --border-light: #D3CBBB;
+  --fg:           #161219;  /* near-black ~16:1 */
+  --fg-muted:     #2A2630;  /* body ~13:1 */
+  --fg-subtle:    #46414E;  /* secondary ~8.5:1 */
+  --fg-faint:     #6E6776;  /* captions ~5:1 */
+  --accent:       #6A3CC4;
+  --tint:         #F3EEFB;
+  --tint-border:  #E5D9F5;
+  --grid:         rgba(106,60,196,0.05);
+  --nav-bg:       rgba(251,250,247,0.82);
+  --shadow:       rgba(22,18,25,0.16);
 }
 
-.dark {
-  --bg:            #0A0810;
-  --sunk:          #07060B;
-  --surface:       #120F19;
-  --card:          #14101D;
-  --border:        #251E33;
-  --border-strong: #382C4A;
-  --fg:            #F5F2EC;
-  --fg-muted:      #D2CBDD;
-  --fg-subtle:     #9E96AC;
-  --fg-faint:      #6E6679;
-  --accent:        #BCA1E8;
-  --tint:          #190F28;
-  --tint-border:   #322545;
-  --grid:          rgba(188,161,232,0.06);
-  --nav-bg:        rgba(10,8,16,0.82);
-  --shadow:        rgba(0,0,0,0.6);
+/* a dark dramatic moment — wrap any <section> in `.dark-moment` */
+.dark-moment {
+  --bg:           #0C0A12;
+  --surface:      #171221;
+  --card:         #171221;
+  --sunk:         #08070C;
+  --border:       #2A2238;
+  --border-light: #3A3050;
+  --fg:           #F6F2EA;  /* ~16:1 on the dark bg */
+  --fg-muted:     #D3CCDE;
+  --fg-subtle:    #ABA2BA;
+  --fg-faint:     #7E7589;
+  --accent:       #C2A8EC;
+  --tint:         #1A1228;
+  --tint-border:  #322545;
+  --grid:         rgba(194,168,236,0.06);
+  --shadow:       rgba(0,0,0,0.6);
+  background: var(--bg);
+  color: var(--fg);
 }
 
 @layer base {
@@ -52,76 +56,59 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
   * { box-sizing: border-box; }
-  ::selection { background: rgba(106,60,196,0.20); }
+  ::selection { background: rgba(106,60,196,0.18); }
   ::-webkit-scrollbar { width: 9px; height: 9px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 9999px; }
+
+  /* Lenis smooth-scroll */
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-stopped { overflow: hidden; }
 }
 
 @layer components {
-  .eyebrow {
-    @apply inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.04em] font-mono;
-    color: var(--accent);
-  }
-  .h-display { @apply font-semibold; color: var(--fg); letter-spacing: -0.035em; line-height: 1.02; }
+  /* editorial display face */
+  .display { font-family: 'Fraunces', Georgia, serif; font-weight: 500; letter-spacing: -0.02em; line-height: 1.0; color: var(--fg); }
   .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 
-  .card {
-    @apply rounded-2xl border;
-    background: var(--card);
-    border-color: var(--border);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 22px 48px -34px var(--shadow);
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.14em] uppercase font-mono;
+    color: var(--accent);
   }
-  .card-hover { @apply card transition-all duration-300; }
-  .card-hover:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 30px 60px -34px var(--shadow); }
 
-  /* Apple-shaped pills */
+  .card { @apply rounded-2xl border; background: var(--card); border-color: var(--border); }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px] text-white;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-medium text-[15px] text-white;
     background: #6A3CC4;
-    transition: transform .18s ease, background .2s ease, box-shadow .2s ease;
-    box-shadow: 0 10px 26px -12px rgba(106,60,196,0.55);
+    transition: transform .2s ease, background .2s ease, box-shadow .25s ease;
+    box-shadow: 0 12px 30px -14px rgba(106,60,196,0.6);
   }
-  .btn-primary:hover { background: #5A309F; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(106,60,196,0.65); }
+  .btn-primary:hover { background: #5A309F; transform: translateY(-1px); }
   .btn-primary:active { transform: scale(0.97); }
 
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px];
-    color: var(--fg); background: var(--surface); border: 1px solid var(--border-strong);
-    transition: transform .18s ease, border-color .2s ease, background .2s ease, color .2s ease;
+  .btn-line {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-medium text-[15px];
+    color: var(--fg); border: 1px solid var(--border-light); background: transparent;
+    transition: transform .2s ease, border-color .2s ease, color .2s ease;
   }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--tint); transform: translateY(-1px); }
-  .btn-ghost:active { transform: scale(0.97); }
+  .btn-line:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
 
-  .link-arrow { @apply inline-flex items-center gap-1 text-[15px] font-medium; color: var(--accent); transition: gap .2s ease; }
-  .link-arrow:hover { gap: 0.5rem; }
+  .link-arrow { @apply inline-flex items-center gap-1.5 text-[15px] font-medium; color: var(--accent); transition: gap .2s ease; }
+  .link-arrow:hover { gap: 0.55rem; }
 
-  .icon-btn { @apply inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-200; color: var(--fg-subtle); }
-  .icon-btn:hover { color: var(--fg); background: var(--tint); }
-
-  /* status dot — the small "infrastructure" cue */
-  .dot { @apply inline-block h-1.5 w-1.5 rounded-full; background: #2FB873; box-shadow: 0 0 0 3px rgba(47,184,115,0.15); }
+  .dot { @apply inline-block h-1.5 w-1.5 rounded-full; background: #2FB873; box-shadow: 0 0 0 3px rgba(47,184,115,0.16); }
 }
 
 @layer utilities {
-  .font-display { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
-
-  /* engineering grid — signals the compute layer underneath */
   .grid-lines {
     background-image:
       linear-gradient(var(--grid) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 46px 46px;
-  }
-
-  .text-shimmer {
-    background: linear-gradient(110deg, var(--accent) 30%, #9466DB 50%, var(--accent) 70%);
-    background-size: 220% 100%;
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    @apply animate-shimmer;
+    background-size: 48px 48px;
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
