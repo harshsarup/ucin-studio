@@ -3,6 +3,7 @@ import { Footer } from '@/components/Footer'
 import { Hero } from '@/sections/Hero'
 import { Work } from '@/sections/Work'
 import { Manifesto } from '@/sections/Manifesto'
+import { HowItWorks } from '@/sections/HowItWorks'
 
 /**
  * Rebuild — Phase 1 (top third): the new art direction. The remaining sections
@@ -17,6 +18,7 @@ export function Landing() {
         <Hero />
         <Work />
         <Manifesto />
+        <HowItWorks />
       </main>
       <Footer />
     </div>

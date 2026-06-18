@@ -14,10 +14,10 @@
   --sunk:         #F2EFE8;
   --border:       #E5DFD3;
   --border-light: #D3CBBB;
-  --fg:           #161219;  /* near-black ~16:1 */
-  --fg-muted:     #2A2630;  /* body ~13:1 */
-  --fg-subtle:    #46414E;  /* secondary ~8.5:1 */
-  --fg-faint:     #6E6776;  /* captions ~5:1 */
+  --fg:           #131019;  /* near-black ~17:1 */
+  --fg-muted:     #221E2A;  /* body ~14:1 — strong */
+  --fg-subtle:    #3C3744;  /* secondary ~10:1 */
+  --fg-faint:     #585263;  /* captions ~6.5:1 */
   --accent:       #6A3CC4;
   --tint:         #F3EEFB;
   --tint-border:  #E5D9F5;
@@ -70,8 +70,8 @@
 }
 
 @layer components {
-  /* editorial display face */
-  .display { font-family: 'Fraunces', Georgia, serif; font-weight: 500; letter-spacing: -0.02em; line-height: 1.0; color: var(--fg); }
+  /* display face — professional, premium grotesk */
+  .display { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1.03; color: var(--fg); }
   .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 
   .eyebrow {

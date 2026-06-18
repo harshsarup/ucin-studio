@@ -31,7 +31,7 @@ export function Manifesto() {
           className="display" style={{ fontSize: 'clamp(2.6rem, 6.5vw, 5rem)' }}
         >
           The hours that vanish<br />into post —{' '}
-          <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>those are ours now.</span>
+          <span style={{ color: 'var(--accent)' }}>those are ours now.</span>
         </motion.h2>
 
         <motion.p

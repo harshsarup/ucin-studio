@@ -16,9 +16,9 @@ export function Hero() {
 
   return (
     <section id="top" ref={ref} className="relative pt-36 pb-24 overflow-hidden">
-      <div className="absolute inset-0 grid-lines opacity-70 [mask-image:radial-gradient(ellipse_72%_55%_at_50%_0%,black,transparent)]" />
-      <div className="absolute inset-x-0 top-0 h-[440px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 55% 100% at 50% 0%, rgba(106,60,196,0.11), transparent 70%)' }} />
+      <div className="absolute inset-0 grid-lines opacity-40 [mask-image:radial-gradient(ellipse_70%_45%_at_50%_0%,black,transparent)]" />
+      <div className="absolute inset-x-0 top-0 h-[300px] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 50% 100% at 50% 0%, rgba(106,60,196,0.06), transparent 72%)' }} />
 
       <div className="relative max-w-5xl mx-auto px-6 text-center">
         <motion.div
@@ -34,7 +34,7 @@ export function Hero() {
           style={{ fontSize: 'clamp(3.2rem, 8.5vw, 6.6rem)' }}
         >
           Make the work.<br />
-          <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>We&apos;ll finish it.</span>
+          <span style={{ color: 'var(--accent)' }}>We&apos;ll finish it.</span>
         </motion.h1>
 
         <motion.p
