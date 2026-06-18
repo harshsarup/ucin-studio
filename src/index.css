@@ -3,42 +3,43 @@
 @tailwind utilities;
 
 /* ───────────────────────── Theme variables ─────────────────────────
-   :root = light (high contrast warm paper). .dark = dark. Tailwind tokens
-   in tailwind.config.js point at these, so every surface + text colour
-   switches with one class on <html>. */
+   :root = light. .dark = dark. Tailwind tokens point at these so every
+   surface + text colour switches with one class on <html>. */
 :root {
-  --bg:            #F6F4EF;
-  --sunk:          #EFEAE1;
+  --bg:            #FAF9F6;
+  --sunk:          #F1EFE9;
   --surface:       #FFFFFF;
   --card:          #FFFFFF;
-  --border:        #E4DDD0;
-  --border-strong: #D3C9B9;
-  --fg:            #14111A;  /* near-black headings — ~15:1 */
-  --fg-muted:      #33303B;  /* body — ~11:1 */
-  --fg-subtle:     #524D5B;  /* secondary — ~7:1 */
-  --fg-faint:      #7C7486;  /* captions only */
-  --accent:        #6A3CC4;  /* plum — links, eyebrow, headline accent */
+  --border:        #E7E2D8;
+  --border-strong: #D7D0C3;
+  --fg:            #15131B;  /* near-black headings ~15:1 */
+  --fg-muted:      #33303B;  /* body ~11:1 */
+  --fg-subtle:     #565160;  /* secondary ~7:1 */
+  --fg-faint:      #837C8C;  /* captions */
+  --accent:        #6A3CC4;  /* plum */
   --tint:          #F3EEFB;
   --tint-border:   #E5D9F5;
-  --nav-bg:        rgba(246,244,239,0.82);
-  --shadow:        rgba(22,19,28,0.20);
+  --grid:          rgba(106,60,196,0.055);
+  --nav-bg:        rgba(250,249,246,0.82);
+  --shadow:        rgba(22,19,28,0.18);
 }
 
 .dark {
-  --bg:            #0B0910;
-  --sunk:          #08070C;
-  --surface:       #141019;
-  --card:          #15111E;
-  --border:        #261F33;
+  --bg:            #0A0810;
+  --sunk:          #07060B;
+  --surface:       #120F19;
+  --card:          #14101D;
+  --border:        #251E33;
   --border-strong: #382C4A;
-  --fg:            #F4F1EA;  /* warm off-white — ~16:1 */
-  --fg-muted:      #D0C9DB;
-  --fg-subtle:     #9C94AA;
+  --fg:            #F5F2EC;
+  --fg-muted:      #D2CBDD;
+  --fg-subtle:     #9E96AC;
   --fg-faint:      #6E6679;
-  --accent:        #B79AE6;  /* lighter plum for dark contrast */
-  --tint:          #1A1326;
-  --tint-border:   #2F2442;
-  --nav-bg:        rgba(11,9,16,0.82);
+  --accent:        #BCA1E8;
+  --tint:          #190F28;
+  --tint-border:   #322545;
+  --grid:          rgba(188,161,232,0.06);
+  --nav-bg:        rgba(10,8,16,0.82);
   --shadow:        rgba(0,0,0,0.6);
 }
 
@@ -66,58 +67,56 @@
     color: var(--accent);
   }
   .h-display { @apply font-semibold; color: var(--fg); letter-spacing: -0.035em; line-height: 1.02; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 
   .card {
-    @apply rounded-3xl border;
+    @apply rounded-2xl border;
     background: var(--card);
     border-color: var(--border);
     box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 22px 48px -34px var(--shadow);
   }
   .card-hover { @apply card transition-all duration-300; }
-  .card-hover:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 30px 60px -34px var(--shadow);
-  }
+  .card-hover:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 30px 60px -34px var(--shadow); }
 
   /* Apple-shaped pills */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px] text-white;
     background: #6A3CC4;
     transition: transform .18s ease, background .2s ease, box-shadow .2s ease;
-    box-shadow: 0 10px 26px -12px rgba(106,60,196,0.6);
+    box-shadow: 0 10px 26px -12px rgba(106,60,196,0.55);
   }
-  .btn-primary:hover { background: #5A309F; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(106,60,196,0.7); }
+  .btn-primary:hover { background: #5A309F; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(106,60,196,0.65); }
   .btn-primary:active { transform: scale(0.97); }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px];
-    color: var(--fg);
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
+    color: var(--fg); background: var(--surface); border: 1px solid var(--border-strong);
     transition: transform .18s ease, border-color .2s ease, background .2s ease, color .2s ease;
   }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--tint); transform: translateY(-1px); }
   .btn-ghost:active { transform: scale(0.97); }
 
-  .link-arrow {
-    @apply inline-flex items-center gap-1 text-[15px] font-medium;
-    color: var(--accent);
-    transition: gap .2s ease, color .2s ease;
-  }
+  .link-arrow { @apply inline-flex items-center gap-1 text-[15px] font-medium; color: var(--accent); transition: gap .2s ease; }
   .link-arrow:hover { gap: 0.5rem; }
 
-  .icon-btn {
-    @apply inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-200;
-    color: var(--fg-subtle);
-  }
+  .icon-btn { @apply inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-200; color: var(--fg-subtle); }
   .icon-btn:hover { color: var(--fg); background: var(--tint); }
+
+  /* status dot — the small "infrastructure" cue */
+  .dot { @apply inline-block h-1.5 w-1.5 rounded-full; background: #2FB873; box-shadow: 0 0 0 3px rgba(47,184,115,0.15); }
 }
 
 @layer utilities {
   .font-display { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
 
-  /* animated accent headline word */
+  /* engineering grid — signals the compute layer underneath */
+  .grid-lines {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+
   .text-shimmer {
     background: linear-gradient(110deg, var(--accent) 30%, #9466DB 50%, var(--accent) 70%);
     background-size: 220% 100%;

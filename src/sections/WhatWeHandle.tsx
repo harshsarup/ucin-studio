@@ -33,6 +33,10 @@ export function WhatWeHandle() {
             Point us at a folder. We finish the whole batch in parallel and send it back —
             every result priced below the tool you use today.
           </p>
+          <p className="mt-4 mono text-[12px] text-fg-faint">
+            Best-in-class open models — Real-ESRGAN · Whisper v3 · FLUX · NLLB-200 — run on our own
+            GPUs, never a third-party API.
+          </p>
         </Reveal>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-3xl overflow-hidden border border-canvas-border bg-canvas-border">

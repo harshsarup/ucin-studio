@@ -2,6 +2,7 @@ import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { Marquee } from '@/components/Marquee'
 import { Hero } from '@/sections/Hero'
+import { Foundation } from '@/sections/Foundation'
 import { WhatWeHandle } from '@/sections/WhatWeHandle'
 import { Showcase } from '@/sections/Showcase'
 import { BrandStyle } from '@/sections/BrandStyle'
@@ -18,6 +19,7 @@ export function Landing() {
       <main>
         <Hero />
         <Marquee />
+        <Foundation />
         <WhatWeHandle />
         <Showcase />
         <BrandStyle />

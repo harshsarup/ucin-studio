@@ -9,8 +9,8 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-4 text-sm text-fg-subtle max-w-xs leading-relaxed">
-              Your AI production partner. Hand off the post-production, stay focused on the
-              work only you can do.
+              The creative production layer on UCIN’s SLA-backed compute network. Hand off the
+              post-production; we run it on our own GPUs.
             </p>
           </div>
           <div>

@@ -1,9 +1,9 @@
 import { Reveal } from '@/components/Reveal'
 
 const STEPS = [
-  { n: '1', title: 'Bring your work', body: 'Point us at your shoot, your footage, your catalog. Any format, any volume.' },
-  { n: '2', title: 'We run the production', body: 'Our AI does the upscaling, cutting, generating and styling — thousands of assets at once, in your look.' },
-  { n: '3', title: 'Get it back finished', body: 'Review the batch, compare before and after, download. Pay only for what we delivered.' },
+  { n: '1', title: 'Bring your work', body: 'Drop in a folder — shoot, footage, catalog. Assets are encrypted client-side before a single byte uploads to India-resident storage.' },
+  { n: '2', title: 'We run the production', body: 'Your batch is dispatched across our SLA-backed GPU pool and processed in parallel, in your style. Guaranteed completion, not best-effort.' },
+  { n: '3', title: 'Get it back finished', body: 'Review the batch, compare before and after, download. You pay per delivered result — derived from real compute, not a per-call API fee.' },
 ]
 
 export function HowItWorks() {
