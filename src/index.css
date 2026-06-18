@@ -2,87 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ───────────────────────── Theme variables ─────────────────────────
+   :root = light (high contrast warm paper). .dark = dark. Tailwind tokens
+   in tailwind.config.js point at these, so every surface + text colour
+   switches with one class on <html>. */
+:root {
+  --bg:            #F6F4EF;
+  --sunk:          #EFEAE1;
+  --surface:       #FFFFFF;
+  --card:          #FFFFFF;
+  --border:        #E4DDD0;
+  --border-strong: #D3C9B9;
+  --fg:            #14111A;  /* near-black headings — ~15:1 */
+  --fg-muted:      #33303B;  /* body — ~11:1 */
+  --fg-subtle:     #524D5B;  /* secondary — ~7:1 */
+  --fg-faint:      #7C7486;  /* captions only */
+  --accent:        #6A3CC4;  /* plum — links, eyebrow, headline accent */
+  --tint:          #F3EEFB;
+  --tint-border:   #E5D9F5;
+  --nav-bg:        rgba(246,244,239,0.82);
+  --shadow:        rgba(22,19,28,0.20);
+}
+
+.dark {
+  --bg:            #0B0910;
+  --sunk:          #08070C;
+  --surface:       #141019;
+  --card:          #15111E;
+  --border:        #261F33;
+  --border-strong: #382C4A;
+  --fg:            #F4F1EA;  /* warm off-white — ~16:1 */
+  --fg-muted:      #D0C9DB;
+  --fg-subtle:     #9C94AA;
+  --fg-faint:      #6E6679;
+  --accent:        #B79AE6;  /* lighter plum for dark contrast */
+  --tint:          #1A1326;
+  --tint-border:   #2F2442;
+  --nav-bg:        rgba(11,9,16,0.82);
+  --shadow:        rgba(0,0,0,0.6);
+}
+
 @layer base {
   html { @apply scroll-smooth; }
   body {
-    background-color: #F7F5F1;
-    color: #16131C;
+    background-color: var(--bg);
+    color: var(--fg);
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   * { box-sizing: border-box; }
-  ::selection { background: rgba(106,60,196,0.18); }
+  ::selection { background: rgba(106,60,196,0.20); }
   ::-webkit-scrollbar { width: 9px; height: 9px; }
-  ::-webkit-scrollbar-track { background: #F7F5F1; }
-  ::-webkit-scrollbar-thumb { background: #DBD3C6; border-radius: 9999px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9999px; }
 }
 
 @layer components {
   .eyebrow {
     @apply inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.04em] font-mono;
-    color: #6A3CC4;
+    color: var(--accent);
   }
-
-  .h-display {
-    @apply font-semibold text-fg;
-    letter-spacing: -0.035em;
-    line-height: 1.02;
-  }
+  .h-display { @apply font-semibold; color: var(--fg); letter-spacing: -0.035em; line-height: 1.02; }
 
   .card {
-    @apply rounded-3xl border bg-canvas-card;
-    border-color: #ECE6DB;
-    box-shadow: 0 1px 2px rgba(22,19,28,0.04), 0 22px 48px -34px rgba(22,19,28,0.22);
+    @apply rounded-3xl border;
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 22px 48px -34px var(--shadow);
   }
   .card-hover { @apply card transition-all duration-300; }
   .card-hover:hover {
     transform: translateY(-4px);
-    border-color: rgba(106,60,196,0.28);
-    box-shadow: 0 1px 2px rgba(22,19,28,0.04), 0 32px 60px -32px rgba(106,60,196,0.28);
+    border-color: var(--accent);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 30px 60px -34px var(--shadow);
   }
 
-  /* Apple-shaped pills — solid plum primary, light bordered secondary */
+  /* Apple-shaped pills */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px] text-white;
     background: #6A3CC4;
-    transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease;
+    transition: transform .18s ease, background .2s ease, box-shadow .2s ease;
     box-shadow: 0 10px 26px -12px rgba(106,60,196,0.6);
   }
   .btn-primary:hover { background: #5A309F; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(106,60,196,0.7); }
   .btn-primary:active { transform: scale(0.97); }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px] text-fg bg-white;
-    border: 1px solid #DBD3C6;
-    transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium text-[15px];
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    transition: transform .18s ease, border-color .2s ease, background .2s ease, color .2s ease;
   }
-  .btn-ghost:hover { border-color: #6A3CC4; color: #6A3CC4; background: #F4EFFB; transform: translateY(-1px); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--tint); transform: translateY(-1px); }
   .btn-ghost:active { transform: scale(0.97); }
 
   .link-arrow {
     @apply inline-flex items-center gap-1 text-[15px] font-medium;
-    color: #6A3CC4;
-    transition: gap 0.2s ease, color 0.2s ease;
+    color: var(--accent);
+    transition: gap .2s ease, color .2s ease;
   }
-  .link-arrow:hover { color: #5A309F; gap: 0.5rem; }
+  .link-arrow:hover { gap: 0.5rem; }
+
+  .icon-btn {
+    @apply inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-200;
+    color: var(--fg-subtle);
+  }
+  .icon-btn:hover { color: var(--fg); background: var(--tint); }
 }
 
 @layer utilities {
   .font-display { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
-  .text-plum { color: #6A3CC4; }
 
-  /* animated plum→violet headline word — fun, but restrained */
+  /* animated accent headline word */
   .text-shimmer {
-    background: linear-gradient(110deg, #6A3CC4 28%, #9466DB 50%, #6A3CC4 72%);
+    background: linear-gradient(110deg, var(--accent) 30%, #9466DB 50%, var(--accent) 70%);
     background-size: 220% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     @apply animate-shimmer;
   }
-
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }

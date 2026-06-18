@@ -13,7 +13,7 @@ export function HowItWorks() {
         <Reveal className="max-w-3xl mb-16">
           <div className="eyebrow mb-5">How it works</div>
           <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-            You send the work.<br /><span className="text-fg-subtle">We send it back finished.</span>
+            You send the work.<br /><span className="text-accent">We send it back finished.</span>
           </h2>
           <p className="mt-6 text-lg text-fg-muted leading-relaxed max-w-xl">
             No pipelines to build, no models to wrangle, no compute to babysit. You never
@@ -25,7 +25,7 @@ export function HowItWorks() {
           {STEPS.map((s, i) => (
             <Reveal key={s.n} delay={i * 0.1}>
               <div className="md:border-l border-canvas-border md:pl-7">
-                <div className="text-plum-600 font-mono text-sm mb-4">0{s.n}</div>
+                <div className="text-accent font-mono text-sm mb-4">0{s.n}</div>
                 <div className="text-xl font-semibold text-fg mb-2.5">{s.title}</div>
                 <p className="text-[15px] text-fg-subtle leading-relaxed">{s.body}</p>
               </div>

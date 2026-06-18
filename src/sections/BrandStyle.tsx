@@ -5,13 +5,13 @@ export function BrandStyle() {
   return (
     <section id="brand-style" className="px-6 py-12">
       <div className="max-w-6xl mx-auto rounded-[2rem] border px-8 sm:px-14 py-16 sm:py-20"
-        style={{ background: 'linear-gradient(160deg, #F6F1FC 0%, #F7F5F1 60%)', borderColor: '#E7DBF6' }}>
+        style={{ background: 'linear-gradient(160deg, var(--tint) 0%, var(--bg) 65%)', borderColor: 'var(--tint-border)' }}>
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Copy */}
           <Reveal>
             <div className="eyebrow mb-5">Brand-Style</div>
             <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-              It always<br /><span className="text-plum">looks like you.</span>
+              It always<br /><span className="text-accent">looks like you.</span>
             </h2>
             <p className="mt-6 text-lg text-fg-muted leading-relaxed">
               Send us your best work and we learn your aesthetic — your colour, your grade, your

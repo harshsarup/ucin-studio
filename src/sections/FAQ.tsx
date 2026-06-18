@@ -26,8 +26,8 @@ export function FAQ() {
                 onClick={() => setOpen(open === i ? null : i)}
                 className="w-full flex items-center justify-between gap-6 py-5 text-left group"
               >
-                <span className="text-[17px] font-medium text-fg group-hover:text-plum-600 transition-colors">{item.q}</span>
-                {open === i ? <Minus size={18} className="text-plum-600 shrink-0" /> : <Plus size={18} className="text-fg-subtle shrink-0" />}
+                <span className="text-[17px] font-medium text-fg group-hover:text-accent transition-colors">{item.q}</span>
+                {open === i ? <Minus size={18} className="text-accent shrink-0" /> : <Plus size={18} className="text-fg-subtle shrink-0" />}
               </button>
               {open === i && (
                 <p className="pb-6 -mt-1 text-[15px] text-fg-subtle leading-relaxed max-w-2xl">{item.a}</p>

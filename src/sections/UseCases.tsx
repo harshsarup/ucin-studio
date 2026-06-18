@@ -14,7 +14,7 @@ export function UseCases() {
         <Reveal className="max-w-3xl mb-16">
           <div className="eyebrow mb-5">Who it's for</div>
           <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-            For people who make<br /><span className="text-fg-subtle">at volume.</span>
+            For people who make<br /><span className="text-accent">at volume.</span>
           </h2>
         </Reveal>
 

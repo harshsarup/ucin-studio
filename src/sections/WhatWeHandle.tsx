@@ -27,7 +27,7 @@ export function WhatWeHandle() {
         <Reveal className="max-w-3xl mb-16">
           <div className="eyebrow mb-5">What we handle</div>
           <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-            We handle the grind.<br /><span className="text-fg-subtle">You keep the craft.</span>
+            We handle the grind.<br /><span className="text-accent">You keep the craft.</span>
           </h2>
           <p className="mt-6 text-lg text-fg-muted leading-relaxed max-w-xl">
             Point us at a folder. We finish the whole batch in parallel and send it back —
@@ -35,13 +35,13 @@ export function WhatWeHandle() {
           </p>
         </Reveal>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-3xl overflow-hidden border border-canvas-border" style={{ background: '#E8E2D6' }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-3xl overflow-hidden border border-canvas-border bg-canvas-border">
           {TASKS.map((t, i) => {
             const p = priced[t.action_id]
             return (
               <Reveal key={t.action_id} delay={i * 0.04}>
-                <div className="group h-full p-7 bg-white hover:bg-plum-50/60 transition-colors duration-300">
-                  <t.Icon size={22} className="text-plum-600 mb-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
+                <div className="group h-full p-7 bg-canvas-card hover:bg-canvas-tint transition-colors duration-300">
+                  <t.Icon size={22} className="text-accent mb-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
                   <div className="text-[15px] font-semibold text-fg">{t.label}</div>
                   <div className="text-sm text-fg-subtle leading-snug mt-1.5">{t.benefit}</div>
                   {p && (
