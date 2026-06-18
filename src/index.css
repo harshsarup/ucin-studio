@@ -10,12 +10,12 @@
   --sunk:          #F1EFE9;
   --surface:       #FFFFFF;
   --card:          #FFFFFF;
-  --border:        #E7E2D8;
-  --border-strong: #D7D0C3;
-  --fg:            #15131B;  /* near-black headings ~15:1 */
-  --fg-muted:      #33303B;  /* body ~11:1 */
-  --fg-subtle:     #565160;  /* secondary ~7:1 */
-  --fg-faint:      #837C8C;  /* captions */
+  --border:        #E4DFD4;
+  --border-strong: #CFC8BA;
+  --fg:            #120F18;  /* near-black headings ~16:1 */
+  --fg-muted:      #242029;  /* body ~13:1 — strong, readable */
+  --fg-subtle:     #423D4B;  /* secondary ~8.5:1 */
+  --fg-faint:      #615B6D;  /* captions ~5.6:1 */
   --accent:        #6A3CC4;  /* plum */
   --tint:          #F3EEFB;
   --tint-border:   #E5D9F5;

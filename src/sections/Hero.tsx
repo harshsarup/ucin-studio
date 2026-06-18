@@ -40,10 +40,10 @@ export function Hero() {
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15, ease }}
           className="mt-7 text-xl text-fg-muted leading-relaxed max-w-2xl mx-auto"
         >
-          UCIN Studio runs your post-production — upscaling, cut-outs, generation, transcription —
-          on our own <span className="text-fg font-medium">SLA-backed GPU network</span>. Not a
-          reseller's API: guaranteed completion, India-resident, batch-native, at a fraction of
-          per-call pricing.
+          We become part of your studio — the production team that runs your post. Upscaling,
+          cut-outs, generation and transcription, executed on a dedicated{' '}
+          <span className="text-fg font-medium">SLA-backed compute network</span>. Not a reseller&apos;s
+          API: guaranteed completion, India-resident, batch-native, at a fraction of per-call pricing.
         </motion.p>
 
         <motion.div

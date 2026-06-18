@@ -34,8 +34,8 @@ export function WhatWeHandle() {
             every result priced below the tool you use today.
           </p>
           <p className="mt-4 mono text-[12px] text-fg-faint">
-            Best-in-class open models — Real-ESRGAN · Whisper v3 · FLUX · NLLB-200 — run on our own
-            GPUs, never a third-party API.
+            Best-in-class open models — Real-ESRGAN · Whisper v3 · FLUX · NLLB-200 — run on our
+            SLA-backed compute network, never a third-party API.
           </p>
         </Reveal>
 

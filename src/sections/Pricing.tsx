@@ -26,7 +26,7 @@ export function Pricing() {
             You pay for finished work.<br /><span className="text-accent">Nothing else.</span>
           </h2>
           <p className="mt-6 text-lg text-fg-muted leading-relaxed">
-            Per-result prices are derived from real GPU cost on our own network — not per-call API
+            Per-result prices are derived from real compute cost on our network — not per-call API
             markups. Start free and pay as you go; add a Power Pass for your own style and member
             rates. No contracts.
           </p>

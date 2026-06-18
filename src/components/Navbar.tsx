@@ -4,10 +4,10 @@ import { Logo } from './Logo'
 import { ThemeToggle } from './ThemeToggle'
 
 const LINKS = [
+  { label: 'For studios', href: '#studios' },
   { label: 'Platform', href: '#foundation' },
   { label: 'What we handle', href: '#handle' },
   { label: 'Brand-Style', href: '#brand-style' },
-  { label: 'How it works', href: '#how' },
   { label: 'Pricing', href: '#pricing' },
 ]
 

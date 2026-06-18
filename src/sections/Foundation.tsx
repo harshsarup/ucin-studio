@@ -4,8 +4,8 @@ import { Reveal } from '@/components/Reveal'
 const POINTS = [
   {
     Icon: Network,
-    title: 'Our own GPU network — not a reseller',
-    body: 'Every job runs on UCIN’s SLA-backed compute, not a metered call to someone else’s endpoint. We run the models ourselves on our hardware.',
+    title: 'A dedicated compute network, not an API',
+    body: 'Every job runs on UCIN’s SLA-backed compute network — not a metered call to someone else’s endpoint. We run the models for you on dedicated, India-resident compute.',
   },
   {
     Icon: ShieldCheck,
@@ -28,7 +28,7 @@ const STACK = [
   { label: 'Your assets', sub: 'shoots · catalogs · footage', tone: 'plain' },
   { label: 'UCIN Studio', sub: 'creative layer — upscale · cut-out · generate · transcribe', tone: 'accent' },
   { label: 'SLA-backed compute', sub: 'Flex · Core · Priority — guaranteed completion', tone: 'solid' },
-  { label: 'India-resident GPU network', sub: 'Real-ESRGAN · Whisper v3 · FLUX, run on our hardware', tone: 'plain' },
+  { label: 'India-resident compute network', sub: 'Real-ESRGAN · Whisper v3 · FLUX, run on the network', tone: 'plain' },
 ]
 
 export function Foundation() {
@@ -42,11 +42,11 @@ export function Foundation() {
             <Reveal>
               <div className="eyebrow mb-5"><span className="dot" /> Why it&apos;s different</div>
               <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-                Most AI tools resell an API.<br /><span className="text-accent">We own the compute.</span>
+                Most AI tools wrap an API.<br /><span className="text-accent">We run the compute network.</span>
               </h2>
               <p className="mt-6 text-lg text-fg-muted leading-relaxed max-w-xl">
                 UCIN Studio is the creative layer on UCIN’s SLA-backed compute network. That
-                foundation is the difference between a thin wrapper and a production platform —
+                foundation is the difference between a thin wrapper and a real production partner —
                 in reliability, scale, price and privacy.
               </p>
             </Reveal>

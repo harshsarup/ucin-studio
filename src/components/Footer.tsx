@@ -10,7 +10,7 @@ export function Footer() {
             <Logo />
             <p className="mt-4 text-sm text-fg-subtle max-w-xs leading-relaxed">
               The creative production layer on UCIN’s SLA-backed compute network. Hand off the
-              post-production; we run it on our own GPUs.
+              post-production; we run it for you.
             </p>
           </div>
           <div>
