@@ -8,6 +8,7 @@ import { Process } from '@/sections/Process'
 import { ForStudios } from '@/sections/ForStudios'
 import { Pricing } from '@/sections/Pricing'
 import { FinalCTA } from '@/sections/FinalCTA'
+import { greeting } from '@/utils/greeting'
 
 /**
  * UCIN Studio Landing Page
