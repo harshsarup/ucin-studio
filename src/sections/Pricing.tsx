@@ -1,87 +1,90 @@
-import { Check, ArrowRight } from 'lucide-react'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
+import { ArrowRight, Check } from 'lucide-react'
 import { Reveal } from '@/components/Reveal'
 
-const PAYG = [
-  'Every result priced per item',
-  '20–40% under Cloudinary, Remove.bg, AWS & DALL·E',
-  'No monthly fee — pay only for what we deliver',
-  'Every task unlocked',
-]
+const ease = [0.16, 1, 0.3, 1] as const
 
-const POWER = [
-  'Everything in pay-as-you-go',
-  'Brand-Style — your signature look, trained',
-  'Included results every month',
-  'Member pricing on every job',
-  'Priority production',
+const plans = [
+  {
+    name: 'Starter',
+    price: '₹5,000',
+    period: '/mo',
+    desc: 'For individual creators exploring AI‑powered post‑production.',
+    features: ['100 AI credits', 'Standard queue', 'Basic support', 'Web upload'],
+    highlight: false,
+  },
+  {
+    name: 'Studio',
+    price: '₹15,000',
+    period: '/mo',
+    desc: 'For growing studios that need consistent output.',
+    features: ['500 AI credits', 'Priority queue', 'SLA‑backed delivery', 'Style LoRA training', 'Team dashboard', 'Slack integration'],
+    highlight: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    desc: 'For agencies and high‑volume teams.',
+    features: ['Unlimited AI credits', 'Dedicated GPU cluster', 'Custom SLA', 'Brand‑Style LoRA library', 'Dedicated CSM', 'API access'],
+    highlight: false,
+  },
 ]
 
 export function Pricing() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+
   return (
-    <section id="pricing" className="py-32 sm:py-40">
-      <div className="max-w-5xl mx-auto px-6">
-        <Reveal className="text-center max-w-2xl mx-auto mb-16">
-          <div className="eyebrow mb-5 justify-center flex">Pricing</div>
-          <h2 className="h-display" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)' }}>
-            You pay for finished work.<br /><span className="text-accent">Nothing else.</span>
+    <section ref={ref} id="pricing" className="py-32 bg-stone-50 dark:bg-stone-950">
+      <div className="max-w-6xl mx-auto px-6">
+        <Reveal className="text-center mb-16">
+          <div className="text-sm font-medium text-stone-500 dark:text-stone-400 mb-4 tracking-widest uppercase">Pricing</div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight text-stone-900 dark:text-stone-100"
+            style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
+            Simple, transparent pricing.
           </h2>
-          <p className="mt-6 text-lg text-fg-muted leading-relaxed">
-            Per-result prices are derived from real compute cost on our network — not per-call API
-            markups. Start free and pay as you go; add a Power Pass for your own style and member
-            rates. No contracts.
+          <p className="mt-6 text-lg text-stone-600 dark:text-stone-400 leading-relaxed max-w-2xl mx-auto">
+            Start for free and scale as you grow. No hidden fees, no surprises.
           </p>
         </Reveal>
-
-        <div className="grid md:grid-cols-2 gap-5">
-          {/* PAYG */}
-          <Reveal>
-            <div className="card p-8 h-full flex flex-col">
-              <div className="text-sm font-medium text-fg-subtle">Pay as you go</div>
-              <div className="mt-3 mb-1">
-                <span className="text-5xl font-semibold text-fg tracking-tight">₹0</span>
-                <span className="text-fg-subtle"> to start</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {plans.map((plan, i) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 40 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, delay: i * 0.1, ease }}
+              className={`relative rounded-2xl p-8 border ${plan.highlight ? 'border-[#5B3DAF] bg-[#5B3DAF]/5 shadow-xl shadow-[#5B3DAF]/10' : 'border-stone-200/50 dark:border-stone-700/50 bg-white/60 dark:bg-stone-900/60 backdrop-blur-sm'}`}
+            >
+              {plan.highlight && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#5B3DAF] text-white text-xs font-semibold px-4 py-1 rounded-full">Most popular</span>
+              )}
+              <h3 className="text-2xl font-medium text-stone-900 dark:text-stone-100 mb-2">{plan.name}</h3>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-4xl font-light text-stone-900 dark:text-stone-100">{plan.price}</span>
+                <span className="text-stone-500">{plan.period}</span>
               </div>
-              <p className="text-sm text-fg-subtle mb-8">Then from ₹0.10 per result.</p>
-              <ul className="space-y-3.5 mb-8 flex-1">
-                {PAYG.map((f, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[15px] text-fg-muted">
-                    <Check size={16} className="text-fg-subtle mt-0.5 shrink-0" /> {f}
+              <p className="text-stone-600 dark:text-stone-400 mb-6">{plan.desc}</p>
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feat) => (
+                  <li key={feat} className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
+                    <Check size={18} className="text-[#5B3DAF]" />
+                    {feat}
                   </li>
                 ))}
               </ul>
-              <a href="/app?signup=1" className="btn-ghost w-full">Start free</a>
-            </div>
-          </Reveal>
-
-          {/* Power Pass */}
-          <Reveal delay={0.1}>
-            <div className="card p-8 h-full flex flex-col" style={{ borderColor: 'var(--tint-border)', background: 'var(--tint)', boxShadow: '0 24px 56px -34px rgba(106,60,196,0.35)' }}>
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-accent">Power Pass</div>
-                <span className="text-xs text-accent font-mono">Most popular</span>
-              </div>
-              <div className="mt-3 mb-1">
-                <span className="text-5xl font-semibold text-fg tracking-tight">₹999</span>
-                <span className="text-fg-subtle">/mo</span>
-              </div>
-              <p className="text-sm text-fg-subtle mb-8">For studios shipping on-brand work at volume.</p>
-              <ul className="space-y-3.5 mb-8 flex-1">
-                {POWER.map((f, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[15px] text-fg-muted">
-                    <Check size={16} className="text-accent mt-0.5 shrink-0" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <a href="/app?signup=1&plan=power" className="btn-primary w-full">Get Power Pass <ArrowRight size={15} /></a>
-            </div>
-          </Reveal>
+              <a
+                href="/app?signup=1"
+                className={`group inline-flex items-center justify-center w-full px-6 py-3 rounded-xl font-medium transition-all duration-500 ${plan.highlight ? 'bg-[#5B3DAF] text-white hover:bg-[#4A2F94] shadow-lg shadow-[#5B3DAF]/30' : 'bg-stone-200 dark:bg-stone-700 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-600'}`}
+              >
+                Get started
+                <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </motion.div>
+          ))}
         </div>
-
-        <Reveal delay={0.2} className="text-center mt-8">
-          <p className="text-sm text-fg-faint">
-            Bigger studio? <a href="mailto:hello@ucin.in" className="link-arrow">Talk to us ›</a>
-          </p>
-        </Reveal>
       </div>
     </section>
   )
