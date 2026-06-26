@@ -1,32 +1,21 @@
-import { useRef, useState, useEffect } from 'react'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Play } from 'lucide-react'
 import { BeforeAfter } from '@/components/BeforeAfter'
 import { BEFORE_AFTER } from '@/lib/samples'
 
 const ease = [0.16, 1, 0.3, 1] as const
 
-const HERO_MESSAGES = [
-  "Because art should never be held back",
-  "Because we understand timelines", 
-  "You focus on the art—we handle the rest",
-  "The platform that evolves with you"
-]
-
+/**
+ * Hero section – editorial, calm, single message.
+ * No rotating gimmicks; one timeless headline is enough.
+ */
 export function Hero() {
-  const [currentMessage, setCurrentMessage] = useState(0)
   const sample = BEFORE_AFTER[0]
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const y = useTransform(scrollYProgress, [0, 1], [0, 100])
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentMessage((prev) => (prev + 1) % HERO_MESSAGES.length)
-    }, 4500)
-    return () => clearInterval(interval)
-  }, [])
 
   return (
     <section id="top" ref={ref} className="relative min-h-screen overflow-hidden">
@@ -39,7 +28,6 @@ export function Hero() {
       {/* Content */}
       <div className="relative">
         
-        {/* Hero Content */}
         <div className="max-w-7xl mx-auto px-6 pt-40 pb-32">
           
           {/* Brand mark */}
@@ -56,23 +44,17 @@ export function Hero() {
               </span>
             </div>
             
-            {/* Main headline - editorial serif */}
+            {/* Main headline – editorial serif, static */}
             <div className="space-y-8 mb-16">
-              <div className="h-32 md:h-40 flex items-center justify-center">
-                <AnimatePresence mode="wait">
-                  <motion.h1
-                    key={currentMessage}
-                    initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -40, scale: 1.05 }}
-                    transition={{ duration: 1, ease }}
-                    className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-light leading-[0.85] tracking-tight text-stone-900 dark:text-stone-100 text-center max-w-6xl"
-                    style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}
-                  >
-                    {HERO_MESSAGES[currentMessage]}
-                  </motion.h1>
-                </AnimatePresence>
-              </div>
+              <motion.h1
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 1, ease }}
+                className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-light leading-[0.85] tracking-tight text-stone-900 dark:text-stone-100 text-center max-w-6xl"
+                style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}
+              >
+                Because art should never be held back
+              </motion.h1>
               
               <motion.div
                 initial={{ opacity: 0 }}
@@ -140,7 +122,7 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* Hero showcase - cinematic presentation */}
+        {/* Hero showcase – cinematic presentation */}
         <motion.div 
           style={{ y, opacity }}
           className="relative px-6 pb-20"
@@ -152,7 +134,6 @@ export function Hero() {
               transition={{ duration: 1.4, delay: 0.8, ease }}
               className="relative"
             >
-              {/* Showcase frame */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-stone-900/20 dark:shadow-black/40 bg-white dark:bg-stone-900 p-2">
                 <BeforeAfter before={sample.before} after={sample.after} />
               </div>

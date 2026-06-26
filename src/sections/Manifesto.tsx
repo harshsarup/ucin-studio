@@ -30,19 +30,18 @@ export function Manifesto() {
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight text-stone-900 dark:text-stone-100 mb-8"
             style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
-            Creative work should never<br />
-            wait for compute
+            Creative flow, uninterrupted
           </h2>
           
           <p className="text-xl md:text-2xl text-stone-600 dark:text-stone-400 leading-relaxed max-w-4xl mx-auto">
-            Every photographer knows the feeling: you've captured the perfect moment, 
-            but now you're stuck waiting for your laptop to process hundreds of files.
+            Stop waiting for compute. UCIN Studio makes your hardware a supercomputer
+            so you can focus on what you do best.
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-16 items-center">
           
-          {/* Left column - Philosophy */}
+          {/* Left column – Philosophy */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -52,29 +51,27 @@ export function Manifesto() {
             <div className="space-y-6">
               <h3 className="text-2xl md:text-3xl font-light text-stone-900 dark:text-stone-100"
                 style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
-                The creative constraint
+                Your vision, unchained
               </h3>
               <p className="text-lg text-stone-600 dark:text-stone-400 leading-relaxed">
-                You have to choose between creative time and delivery deadlines. 
-                Your vision is limited by your hardware. Post-production becomes a bottleneck, 
-                not an amplifier.
+                Every minute spent rendering is a minute not spent creating.
+                We remove the bottleneck so your imagination becomes the only limit.
               </p>
             </div>
             
             <div className="space-y-6">
               <h3 className="text-2xl md:text-3xl font-light text-stone-900 dark:text-stone-100"
                 style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
-                Our solution
+                The UCIN way
               </h3>
               <p className="text-lg text-stone-600 dark:text-stone-400 leading-relaxed">
-                UCIN Studio becomes the post-production team inside your workflow. 
-                We handle technical execution while you focus on creative vision. 
-                Your laptop becomes a supercomputer.
+                Our India‑based post‑production team becomes an extension of your studio.
+                Brand‑Style LoRA learns your look, so every frame feels authentically yours.
               </p>
             </div>
           </motion.div>
 
-          {/* Right column - Values */}
+          {/* Right column – Values */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -88,11 +85,11 @@ export function Manifesto() {
               },
               {
                 title: "Style is sacred",
-                desc: "Your signature aesthetic is what sets you apart. Our Brand-Style LoRA learns and preserves your unique vision."
+                desc: "Your signature aesthetic is what sets you apart. Our Brand‑Style LoRA learns and preserves your unique vision."
               },
               {
-                title: "Deadlines are promises",
-                desc: "SLA-backed delivery means your commitments to clients become our commitments to you. No exceptions."
+                title: "Deliver with confidence",
+                desc: "SLA‑backed delivery means your commitments to clients become our commitments to you. No exceptions."
               }
             ].map((value, i) => (
               <motion.div
@@ -122,7 +119,7 @@ export function Manifesto() {
         >
           <p className="text-xl md:text-2xl font-light text-[#5B3DAF] leading-relaxed"
             style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
-            "Because your creativity shouldn't be constrained by your hardware."
+            "Your creativity shouldn't wait for technology."
           </p>
         </motion.div>
       </motion.div>

@@ -11,8 +11,8 @@ import { FinalCTA } from '@/sections/FinalCTA'
 
 /**
  * UCIN Studio Landing Page
- * Brand Direction: Warm editorial-premium, imagery-led, calm
- * Following Frame.io × Krea × Stories by Joseph Radhik aesthetic
+ * Built from scratch following the editorial‑premium, imagery‑led, calm brand direction.
+ * References: Frame.io × Krea × Stories by Joseph Radhik.
  */
 export function Landing() {
   return (
