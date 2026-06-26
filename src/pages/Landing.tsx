@@ -1,24 +1,32 @@
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { Hero } from '@/sections/Hero'
-import { Work } from '@/sections/Work'
 import { Manifesto } from '@/sections/Manifesto'
-import { HowItWorks } from '@/sections/HowItWorks'
+import { WorkGallery } from '@/sections/WorkGallery'
+import { Services } from '@/sections/Services'
+import { Process } from '@/sections/Process'
+import { ForStudios } from '@/sections/ForStudios'
+import { Pricing } from '@/sections/Pricing'
+import { FinalCTA } from '@/sections/FinalCTA'
 
 /**
- * Rebuild — Phase 1 (top third): the new art direction. The remaining sections
- * (What we handle · Brand-Style · For studios · Platform/specs · Process ·
- * Pricing · CTA) follow once the direction is approved.
+ * UCIN Studio Landing Page
+ * Brand Direction: Warm editorial-premium, imagery-led, calm
+ * Following Frame.io × Krea × Stories by Joseph Radhik aesthetic
  */
 export function Landing() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
       <Navbar />
-      <main>
+      <main className="space-y-0">
         <Hero />
-        <Work />
         <Manifesto />
-        <HowItWorks />
+        <WorkGallery />
+        <Services />
+        <Process />
+        <ForStudios />
+        <Pricing />
+        <FinalCTA />
       </main>
       <Footer />
     </div>
