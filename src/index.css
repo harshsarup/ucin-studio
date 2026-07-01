@@ -3,65 +3,61 @@
 @tailwind utilities;
 
 /* ─────────────────────────────────────────────────────────────────────
-   Art direction (committed): warm editorial light base, with dramatic
-   full-bleed dark moments scoped via `.dark-moment` (no global toggle —
-   Apple-style alternation). Tokens point at these CSS variables.
+   UCIN Studio — "sleek tech-forward" (committed).
+   Cool near-white base + fine dot grid + hairlines; precise typography (Inter)
+   with a restrained plum accent and layered glass/depth "effects" for life.
+   Dramatic dark beats scoped via `.dark-moment`. Replicable: change tokens,
+   the whole brand follows. References: Linear / Vercel / Stripe (light).
    ───────────────────────────────────────────────────────────────────── */
 :root {
-  --bg:           #FBFAF7;
+  --bg:           #FFFFFF;  /* clean white (Stripe base) */
   --surface:      #FFFFFF;
   --card:         #FFFFFF;
-  --sunk:         #F2EFE8;
-  --border:       #E5DFD3;
-  --border-light: #D3CBBB;
-  --fg:           #131019;  /* near-black ~17:1 */
-  --fg-muted:     #221E2A;  /* body ~14:1 — strong */
-  --fg-subtle:    #3C3744;  /* secondary ~10:1 */
-  --fg-faint:     #585263;  /* captions ~6.5:1 */
-  --accent:       #6A3CC4;
-  --tint:         #F3EEFB;
-  --tint-border:  #E5D9F5;
-  --grid:         rgba(106,60,196,0.05);
-  --nav-bg:       rgba(251,250,247,0.82);
-  --shadow:       rgba(22,18,25,0.16);
+  --sunk:         #F6F7F9;  /* recessed alt sections */
+  --border:       #E4E7EC;  /* cool hairline */
+  --border-light: #EDEFF3;
+  --border-strong:#0F1115;  /* ink rule */
+  --fg:           #0F1115;  /* cool near-black ~17:1 */
+  --fg-muted:     #33373F;
+  --fg-subtle:    #565C68;
+  --fg-faint:     #646B79;  /* ~4.6:1 captions */
+  --accent:       #5B3DAF;  /* UCIN plum — restrained brand accent */
+  --accent-ink:   #4A2F94;  /* deeper plum for text on light */
+  --accent-contrast:#FFFFFF;
+  --tint:         #F0ECFA;  /* faint plum wash */
+  --tint-border:  #E1D9F3;
+  --glow:         rgba(91,61,175,0.10);
+  --nav-bg:       rgba(247,248,250,0.80);
+  --shadow:       rgba(15,17,21,0.12);
 }
 
-/* a dark dramatic moment — wrap any <section> in `.dark-moment` */
+/* a dramatic dark beat — cool ink ground, lavender plum accent */
 .dark-moment {
-  --bg:           #0C0A12;
-  --surface:      #171221;
-  --card:         #171221;
-  --sunk:         #08070C;
-  --border:       #2A2238;
-  --border-light: #3A3050;
-  --fg:           #F6F2EA;  /* ~16:1 on the dark bg */
-  --fg-muted:     #D3CCDE;
-  --fg-subtle:    #ABA2BA;
-  --fg-faint:     #7E7589;
-  --accent:       #C2A8EC;
-  --tint:         #1A1228;
-  --tint-border:  #322545;
-  --grid:         rgba(194,168,236,0.06);
-  --shadow:       rgba(0,0,0,0.6);
-  background: var(--bg);
-  color: var(--fg);
+  --bg:#0E0F13; --surface:#16181D; --card:#16181D; --sunk:#0A0B0E;
+  --border:#262A31; --border-light:#1E222A; --border-strong:#ECEEF2;
+  --fg:#ECEEF2; --fg-muted:#C4C8D2; --fg-subtle:#8E95A2; --fg-faint:#6A7180;
+  --accent:#A88FF0; --accent-ink:#BBA6F4; --accent-contrast:#0E0F13;
+  --tint:#1A1730; --tint-border:#2E2A47;
+  --glow:rgba(138,108,242,0.18); --shadow:rgba(0,0,0,0.55);
+  background:var(--bg); color:var(--fg);
 }
+
 
 @layer base {
   html { @apply scroll-smooth; }
   body {
     background-color: var(--bg);
     color: var(--fg);
-    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.011em;
   }
   * { box-sizing: border-box; }
-  ::selection { background: rgba(106,60,196,0.18); }
-  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::selection { background: var(--accent); color: var(--accent-contrast); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb { background: var(--fg-faint); }
 
   /* Lenis smooth-scroll */
   html.lenis, html.lenis body { height: auto; }
@@ -70,46 +66,111 @@
 }
 
 @layer components {
-  /* display face — professional, premium grotesk */
-  .display { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1.03; color: var(--fg); }
+  /* display face — Bricolage Grotesque (the preferred face) */
+  .display {
+    font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.0;
+    color: var(--fg);
+    text-wrap: balance;
+  }
   .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 
+  /* eyebrow — mono uppercase label with a leading plum dot */
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.14em] uppercase font-mono;
-    color: var(--accent);
+    @apply inline-flex items-center gap-2.5 text-[11px] font-medium tracking-[0.18em] uppercase font-mono;
+    color: var(--fg-subtle);
+  }
+  .eyebrow::before {
+    content: '';
+    @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full;
+    background: var(--accent);
   }
 
-  .card { @apply rounded-2xl border; background: var(--card); border-color: var(--border); }
+  /* sleek card — hairline border, soft radius, subtle depth */
+  .card { @apply rounded-xl border; background: var(--card); border-color: var(--border); box-shadow: 0 1px 2px var(--shadow); }
+  .card-hard { @apply rounded-xl border; background: var(--card); border-color: var(--border-strong); }
 
+  /* primary — the plum brand action (Stripe pill) */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-medium text-[15px] text-white;
-    background: #6A3CC4;
-    transition: transform .2s ease, background .2s ease, box-shadow .25s ease;
-    box-shadow: 0 12px 30px -14px rgba(106,60,196,0.6);
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-[15px];
+    background: var(--accent); color: var(--accent-contrast);
+    transition: background .18s ease, transform .18s ease, box-shadow .2s ease;
+    box-shadow: 0 12px 28px -12px var(--accent);
   }
-  .btn-primary:hover { background: #5A309F; transform: translateY(-1px); }
-  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:hover { background: var(--accent-ink); }
+  .btn-primary:active { transform: scale(0.98); }
 
+  /* secondary — soft pill */
   .btn-line {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-medium text-[15px];
-    color: var(--fg); border: 1px solid var(--border-light); background: transparent;
-    transition: transform .2s ease, border-color .2s ease, color .2s ease;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-[15px];
+    color: var(--fg); border: 1px solid var(--border); background: var(--surface);
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
   }
-  .btn-line:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .btn-line:hover { border-color: var(--fg-faint); }
+  .btn-line:active { transform: scale(0.98); }
 
-  .link-arrow { @apply inline-flex items-center gap-1.5 text-[15px] font-medium; color: var(--accent); transition: gap .2s ease; }
+  .link-arrow { @apply inline-flex items-center gap-1.5 text-[14px] font-semibold; color: var(--accent-ink); transition: gap .18s ease; }
   .link-arrow:hover { gap: 0.55rem; }
 
-  .dot { @apply inline-block h-1.5 w-1.5 rounded-full; background: #2FB873; box-shadow: 0 0 0 3px rgba(47,184,115,0.16); }
+  .dot { @apply inline-block h-1.5 w-1.5 rounded-full; background: var(--accent); }
+
+  /* funky gradient text — for a vibrant keyword pop (creator energy) */
+  .text-grad {
+    background: linear-gradient(92deg, #6C4FFF, #8B5CF6 50%, #A855F7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* animated flowing gradient text — for "limitless" */
+  .text-grad-flow {
+    background: linear-gradient(92deg, #6C4FFF, #8B5CF6, #A855F7, #6C4FFF);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradflow 5s linear infinite;
+  }
+  .drift-slow { animation: drift 15s ease-in-out infinite; }
+  .blob-morph { animation: blob 16s ease-in-out infinite; }
+
+  /* frosted glass chip — for layered effect compositions */
+  .glass {
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    box-shadow: 0 14px 30px -12px var(--shadow);
+  }
 }
 
 @layer utilities {
   .grid-lines {
     background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 48px 48px;
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 64px 64px;
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .text-stroke {
+    -webkit-text-stroke: 1.5px var(--fg);
+    color: transparent;
+  }
+}
+
+@keyframes gradflow { to { background-position: 220% center; } }
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-6%, 5%) scale(1.12); }
+}
+@keyframes blob {
+  0%, 100% { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; transform: rotate(0deg); }
+  50% { border-radius: 60% 40% 34% 66% / 57% 62% 38% 43%; transform: rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-grad-flow { animation: none; }
+  .drift-slow { animation: none; }
+  .blob-morph { animation: none; border-radius: 46% 54% 58% 42% / 44% 48% 52% 56%; }
 }

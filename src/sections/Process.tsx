@@ -1,52 +1,46 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Upload, Wand2, Zap, Truck } from 'lucide-react'
 import { Reveal } from '@/components/Reveal'
 
 const ease = [0.16, 1, 0.3, 1] as const
 
 const steps = [
-  { icon: Upload, title: 'Upload', desc: 'Drop your raw files via web or CLI. We support all major formats.' },
-  { icon: Wand2, title: 'Learn', desc: 'Our Brand‑Style LoRA analyses your colour palette, mood, and composition.' },
-  { icon: Zap, title: 'Process', desc: 'Bulk renders run on our GPU cluster with SLA‑backed turnaround.' },
-  { icon: Truck, title: 'Deliver', desc: 'Receive production‑ready files directly in your workspace.' },
+  { n: '01', title: 'Build it, or just describe it', desc: 'Pick a preset, or type the job in a sentence — the assistant plans the steps and prices it instantly.' },
+  { n: '02', title: 'We learn your look', desc: 'Brand-Style reads your palette, mood and composition from your own edits — and sharpens every shoot.' },
+  { n: '03', title: 'We do the grunt work', desc: 'Bulk renders run on SLA-backed compute at the deadline you set — overnight to within the hour.' },
+  { n: '04', title: 'Delivered, priced up front', desc: 'Production-ready files land back in your workspace at the fixed price you agreed. Never billed over.' },
 ]
 
 export function Process() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section ref={ref} className="py-32 bg-stone-50 dark:bg-stone-950">
-      <div className="max-w-6xl mx-auto px-6">
-        <Reveal className="text-center mb-16">
-          <div className="text-sm font-medium text-stone-500 dark:text-stone-400 mb-4 tracking-widest uppercase">How it works</div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight text-stone-900 dark:text-stone-100"
-            style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
+    <section id="how" ref={ref} className="py-24 md:py-32 bg-canvas-sunk">
+      <div className="max-w-7xl mx-auto px-6">
+        <Reveal className="max-w-2xl mb-14">
+          <div className="eyebrow mb-5">How it works</div>
+          <h2 className="display" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 4.4rem)' }}>
             Four steps to finished.
           </h2>
-          <p className="mt-6 text-lg text-stone-600 dark:text-stone-400 leading-relaxed max-w-2xl mx-auto">
-            UCIN Studio fits into your existing workflow so you can start within minutes.
-          </p>
         </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+        <div className="border-t" style={{ borderColor: 'var(--fg)' }}>
           {steps.map((step, i) => (
             <motion.div
-              key={step.title}
-              initial={{ opacity: 0, y: 40 }}
+              key={step.n}
+              initial={{ opacity: 0, y: 16 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: i * 0.1, ease }}
-              className="relative text-center"
+              transition={{ duration: 0.55, delay: i * 0.08, ease }}
+              className="group grid grid-cols-1 md:grid-cols-[auto_1fr_2fr] items-baseline gap-3 md:gap-10 border-b py-8"
+              style={{ borderColor: 'var(--border)' }}
             >
-              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#5B3DAF]/10 text-[#5B3DAF]">
-                <step.icon size={28} />
+              <div className="display flex items-center gap-3 text-3xl md:text-4xl text-fg">
+                <span className="inline-block h-2.5 w-2.5" style={{ background: 'var(--accent)' }} />
+                {step.n}
               </div>
-              <h3 className="text-xl font-medium text-stone-900 dark:text-stone-100 mb-2">{step.title}</h3>
-              <p className="text-stone-600 dark:text-stone-400 leading-relaxed">{step.desc}</p>
-              {/* connecting line */}
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute top-8 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-0.5 bg-stone-200 dark:bg-stone-700" />
-              )}
+              <h3 className="display text-xl md:text-2xl text-fg">{step.title}</h3>
+              <p className="text-[15px] md:text-lg leading-relaxed text-fg-subtle">{step.desc}</p>
             </motion.div>
           ))}
         </div>

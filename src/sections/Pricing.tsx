@@ -2,89 +2,84 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 import { Reveal } from '@/components/Reveal'
+import { SPEED_TIERS } from '@/lib/catalog'
 
 const ease = [0.16, 1, 0.3, 1] as const
 
-const plans = [
-  {
-    name: 'Starter',
-    price: '₹5,000',
-    period: '/mo',
-    desc: 'For individual creators exploring AI‑powered post‑production.',
-    features: ['100 AI credits', 'Standard queue', 'Basic support', 'Web upload'],
-    highlight: false,
-  },
-  {
-    name: 'Studio',
-    price: '₹15,000',
-    period: '/mo',
-    desc: 'For growing studios that need consistent output.',
-    features: ['500 AI credits', 'Priority queue', 'SLA‑backed delivery', 'Style LoRA training', 'Team dashboard', 'Slack integration'],
-    highlight: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    desc: 'For agencies and high‑volume teams.',
-    features: ['Unlimited AI credits', 'Dedicated GPU cluster', 'Custom SLA', 'Brand‑Style LoRA library', 'Dedicated CSM', 'API access'],
-    highlight: false,
-  },
-]
+const KICKER: Record<string, string> = { flex: 'Standard', core: 'Faster', priority: 'Fastest' }
+const INCLUDES: Record<string, string> = {
+  flex: 'Best for full events and large catalogs.',
+  core: 'Sneak peeks and same-day client turnarounds.',
+  priority: 'Urgent hero shots and last-minute deliveries.',
+}
 
+/**
+ * Pricing — value-first. Per-event, build-your-own-SLA, fixed quote. The exact
+ * price is built in the app (we don't broadcast per-item rates on the site).
+ */
 export function Pricing() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section ref={ref} id="pricing" className="py-32 bg-stone-50 dark:bg-stone-950">
-      <div className="max-w-6xl mx-auto px-6">
-        <Reveal className="text-center mb-16">
-          <div className="text-sm font-medium text-stone-500 dark:text-stone-400 mb-4 tracking-widest uppercase">Pricing</div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight text-stone-900 dark:text-stone-100"
-            style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}>
-            Simple, transparent pricing.
+    <section id="pricing" ref={ref} className="py-24 md:py-32 bg-canvas">
+      <div className="max-w-7xl mx-auto px-6">
+        <Reveal className="max-w-2xl mb-14">
+          <div className="eyebrow mb-5">Pricing</div>
+          <h2 className="display" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 4.4rem)' }}>
+            Pay <span className="text-grad">per event.</span> Never per month.
           </h2>
-          <p className="mt-6 text-lg text-stone-600 dark:text-stone-400 leading-relaxed max-w-2xl mx-auto">
-            Start for free and scale as you grow. No hidden fees, no surprises.
+          <p className="mt-5 text-lg leading-relaxed text-fg-muted">
+            No subscriptions, no credits to burn. Choose how fast you need it, see one fixed all-in
+            price before anything starts — and you&apos;re never billed above it.
           </p>
         </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, i) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: i * 0.1, ease }}
-              className={`relative rounded-2xl p-8 border ${plan.highlight ? 'border-[#5B3DAF] bg-[#5B3DAF]/5 shadow-xl shadow-[#5B3DAF]/10' : 'border-stone-200/50 dark:border-stone-700/50 bg-white/60 dark:bg-stone-900/60 backdrop-blur-sm'}`}
-            >
-              {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#5B3DAF] text-white text-xs font-semibold px-4 py-1 rounded-full">Most popular</span>
-              )}
-              <h3 className="text-2xl font-medium text-stone-900 dark:text-stone-100 mb-2">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-4xl font-light text-stone-900 dark:text-stone-100">{plan.price}</span>
-                <span className="text-stone-500">{plan.period}</span>
-              </div>
-              <p className="text-stone-600 dark:text-stone-400 mb-6">{plan.desc}</p>
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feat) => (
-                  <li key={feat} className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
-                    <Check size={18} className="text-[#5B3DAF]" />
-                    {feat}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="/app?signup=1"
-                className={`group inline-flex items-center justify-center w-full px-6 py-3 rounded-xl font-medium transition-all duration-500 ${plan.highlight ? 'bg-[#5B3DAF] text-white hover:bg-[#4A2F94] shadow-lg shadow-[#5B3DAF]/30' : 'bg-stone-200 dark:bg-stone-700 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-600'}`}
+
+        {/* Build-your-own-SLA: speed tiers (no rates) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {SPEED_TIERS.map((s, i) => {
+            const featured = s.id === 'core'
+            return (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: i * 0.07, ease }}
+                className="card p-7"
+                style={featured ? { borderColor: 'var(--accent)', background: 'var(--tint)' } : undefined}
               >
-                Get started
-                <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
-              </a>
-            </motion.div>
-          ))}
+                <div className="mono text-[11px] uppercase tracking-[0.14em] text-fg-faint">
+                  {KICKER[s.id]}{featured && <span style={{ color: 'var(--accent-ink)' }}> · most chosen</span>}
+                </div>
+                <h3 className="display mt-3 text-2xl text-fg">{s.label}</h3>
+                <p className="mt-1.5 text-[15px] text-fg-subtle">{s.promise}</p>
+                <p className="mt-5 text-[14px] leading-relaxed text-fg-muted">{INCLUDES[s.id]}</p>
+              </motion.div>
+            )
+          })}
         </div>
+
+        <Reveal delay={0.1}>
+          <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2 text-[14px] text-fg-subtle">
+            <span className="flex items-center gap-1.5"><Check size={16} style={{ color: 'var(--accent-ink)' }} /> Fixed price — never billed above the quote</span>
+            <span className="flex items-center gap-1.5"><Check size={16} style={{ color: 'var(--accent-ink)' }} /> Pay only for the work in each event</span>
+            <span className="flex items-center gap-1.5"><Check size={16} style={{ color: 'var(--accent-ink)' }} /> Add-ons: private &amp; dedicated, guaranteed deadline, white-label</span>
+          </div>
+        </Reveal>
+
+        {/* Enterprise — Custom */}
+        <Reveal delay={0.15}>
+          <div className="card mt-10 flex flex-col md:flex-row md:items-center justify-between gap-6 p-8">
+            <div className="max-w-xl">
+              <h3 className="display text-2xl text-fg">Enterprise — Custom</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-fg-subtle">
+                For agencies and high-volume studios: dedicated capacity, custom SLAs, a Brand-Style
+                library across teams, and secure, confidential processing with India data-residency.
+              </p>
+            </div>
+            <a href="mailto:hello@ucin.in" className="btn-line shrink-0">Talk to us <ArrowRight size={16} /></a>
+          </div>
+        </Reveal>
       </div>
     </section>
   )

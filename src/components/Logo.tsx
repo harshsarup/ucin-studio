@@ -1,18 +1,16 @@
 import { cn } from '@/lib/cn'
 
-/** UCIN Studio wordmark — the plum mark continues the parent brand, "Studio"
- *  in warm off-white marks the creator product. */
+/** UCIN Studio wordmark — an ink block mark with a signal-red corner cut;
+ *  high-contrast, no gradients. "Studio" sits quieter beside the parent brand. */
 export function Logo({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-2.5 select-none', className)}>
-      <div
-        className="h-7 w-7 rounded-lg flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #8B5CF6, #6A3CC4)', boxShadow: '0 0 18px rgba(139,92,246,0.45)' }}
-      >
-        <span className="text-white font-bold text-sm leading-none">U</span>
+      <div className="relative h-7 w-7 flex items-center justify-center" style={{ background: 'var(--fg)' }}>
+        <span className="font-bold text-sm leading-none" style={{ color: 'var(--bg)', fontFamily: '"Bricolage Grotesque", Inter, sans-serif' }}>U</span>
+        <span className="absolute bottom-0 right-0 h-2 w-2" style={{ background: 'var(--accent)' }} />
       </div>
-      <div className="leading-none">
-        <span className="font-bold tracking-tight text-fg">UCIN</span>
+      <div className="leading-none text-[16px]">
+        <span className="font-bold tracking-tight text-fg" style={{ fontFamily: '"Bricolage Grotesque", Inter, sans-serif' }}>UCIN</span>
         <span className="font-medium text-fg-subtle ml-1.5">Studio</span>
       </div>
     </div>

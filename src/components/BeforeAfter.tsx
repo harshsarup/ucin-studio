@@ -4,8 +4,8 @@ import { useInView } from 'framer-motion'
 /** Drag-to-reveal before/after slider. Auto-sweeps once on first view to invite
  *  interaction — the signature creative-AI gesture, professionally restrained. */
 export function BeforeAfter({
-  before, after, beforeLabel = 'Before', afterLabel = 'After',
-}: { before: string; after: string; beforeLabel?: string; afterLabel?: string }) {
+  before, after, beforeLabel = 'Before', afterLabel = 'After', beforeFilter, noSweep = false,
+}: { before: string; after: string; beforeLabel?: string; afterLabel?: string; beforeFilter?: string; noSweep?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState(50)
   const dragging = useRef(false)
@@ -21,7 +21,7 @@ export function BeforeAfter({
 
   // one-time invitation sweep (cancels the moment the user touches it)
   useEffect(() => {
-    if (!inView) return
+    if (!inView || noSweep) return
     const keys = [50, 80, 20, 50]
     const dur = 1700, seg = dur / (keys.length - 1)
     let raf = 0
@@ -45,8 +45,8 @@ export function BeforeAfter({
   return (
     <div
       ref={ref}
-      className="group relative w-full aspect-[4/3] overflow-hidden rounded-3xl select-none cursor-ew-resize border border-canvas-border"
-      style={{ boxShadow: '0 30px 70px -40px rgba(22,19,28,0.45)' }}
+      style={{ borderColor: 'var(--border)' }}
+      className="group relative w-full aspect-[4/3] overflow-hidden rounded-2xl select-none cursor-ew-resize border"
       onMouseDown={(e) => onDown(e.clientX)}
       onMouseMove={(e) => dragging.current && update(e.clientX)}
       onMouseUp={() => { dragging.current = false }}
@@ -55,19 +55,19 @@ export function BeforeAfter({
       onTouchMove={(e) => update(e.touches[0].clientX)}
     >
       <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-      <span className="absolute top-3 right-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full text-white"
-        style={{ background: 'rgba(106,60,196,0.9)', backdropFilter: 'blur(4px)' }}>{afterLabel}</span>
+      <span className="absolute top-3 right-3 mono text-[10px] font-medium uppercase tracking-[0.12em] px-2.5 py-1 text-white"
+        style={{ background: '#0A0A0A' }}>{afterLabel}</span>
 
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
         <img src={before} alt={beforeLabel} className="absolute inset-0 h-full object-cover max-w-none"
-          style={{ width: ref.current?.clientWidth ?? '100%' }} draggable={false} />
-        <span className="absolute top-3 left-3 text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full"
-          style={{ background: 'rgba(255,255,255,0.85)', color: '#46414E', backdropFilter: 'blur(4px)' }}>{beforeLabel}</span>
+          style={{ width: ref.current?.clientWidth ?? '100%', filter: beforeFilter }} draggable={false} />
+        <span className="absolute top-3 left-3 mono text-[10px] font-medium uppercase tracking-[0.12em] px-2.5 py-1"
+          style={{ background: '#FFFFFF', color: '#0A0A0A' }}>{beforeLabel}</span>
       </div>
 
-      <div className="absolute top-0 bottom-0 w-0.5 bg-white" style={{ left: `${pos}%`, boxShadow: '0 0 12px rgba(0,0,0,0.25)' }}>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6A3CC4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div className="absolute top-0 bottom-0 w-0.5 bg-white" style={{ left: `${pos}%`, boxShadow: '0 0 12px rgba(0,0,0,0.35)' }}>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-none bg-white shadow-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18l-6-6 6-6M15 6l6 6-6 6" />
           </svg>
         </div>

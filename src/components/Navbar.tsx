@@ -3,9 +3,9 @@ import { Menu, X } from 'lucide-react'
 import { Logo } from './Logo'
 
 const LINKS = [
-  { label: 'Work', href: '#work' },
-  { label: 'For studios', href: '#studios' },
   { label: 'Platform', href: '#platform' },
+  { label: 'Desktop app', href: '#desktop' },
+  { label: 'For studios', href: '#studios' },
   { label: 'Pricing', href: '#pricing' },
 ]
 
@@ -39,7 +39,7 @@ export function Navbar() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="/app" className="text-[14px] font-medium text-fg-subtle hover:text-fg transition-colors">Sign in</a>
+            <a href="/login" className="text-[14px] font-medium text-fg-subtle hover:text-fg transition-colors">Sign in</a>
             <a href="/app?signup=1" className="btn-primary !px-5 !py-2.5">Start creating</a>
           </div>
 
@@ -57,7 +57,7 @@ export function Navbar() {
             </a>
           ))}
           <div className="pt-3 space-y-2 border-t" style={{ borderColor: 'var(--border)' }}>
-            <a href="/app" className="block px-2 py-2.5 text-[15px] font-medium text-fg">Sign in</a>
+            <a href="/login" className="block px-2 py-2.5 text-[15px] font-medium text-fg">Sign in</a>
             <a href="/app?signup=1" className="btn-primary w-full">Start creating</a>
           </div>
         </div>

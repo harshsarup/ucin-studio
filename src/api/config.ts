@@ -2,7 +2,14 @@ import axios from 'axios'
 
 // Prod: VITE_API_BASE = https://api.ucin.in. Dev: empty → vite proxies /customer.
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
-const api = axios.create({ baseURL: API_BASE, timeout: 20_000 })
+export const api = axios.create({ baseURL: API_BASE, timeout: 20_000 })
+
+// Attach the auth token (set by api/auth.ts) to every Control-Plane call.
+api.interceptors.request.use((cfg) => {
+  const token = localStorage.getItem('ucin.token')
+  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  return cfg
+})
 
 /** Per-result Studio pricing + the competitor it undercuts (GET /customer/config). */
 export interface TaskPricing {

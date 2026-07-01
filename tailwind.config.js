@@ -25,20 +25,20 @@ export default {
           faint:   'var(--fg-faint)',
         },
         accent: 'var(--accent)',
-        plum: {
-          50:  '#F4EFFB', 100: '#E7DBF6', 200: '#D2BCEC', 300: '#B79AE6',
-          400: '#9466DB', 500: '#7C4DEF', 600: '#6A3CC4', 700: '#52309A',
+        'accent-ink': 'var(--accent-ink)',
+        signal: {
+          DEFAULT: '#FF3D2E', ink: '#D11C0E', bright: '#FF5247',
         },
       },
       fontFamily: {
-        sans:    ['IBM Plex Sans', 'system-ui', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'Inter', 'system-ui', 'sans-serif'],
         mono:    ['IBM Plex Mono', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         marquee: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
       },
-      animation: { marquee: 'marquee 40s linear infinite' },
+      animation: { marquee: 'marquee 38s linear infinite' },
     },
   },
   plugins: [],

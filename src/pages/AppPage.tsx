@@ -1,0 +1,580 @@
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ArrowLeft, Clock, ShieldCheck, ArrowRight, Wand2, Sparkles, ChevronDown, Settings, Download } from 'lucide-react'
+import { Logo } from '@/components/Logo'
+import { Onboarding } from '@/components/Onboarding'
+import { fmtINR } from '@/api/config'
+import { getToken, clearToken, setToken } from '@/api/auth'
+import { planEvent, type AssistantPlan } from '@/api/assistant'
+import { getStyleProfile, type StyleProfile } from '@/api/style'
+import { listWorkflows, createWorkflow, deleteWorkflow, type Workflow } from '@/api/workflows'
+import { listMyModels, type MyModel } from '@/api/models'
+import type { Tier, TaskId, Vertical, EventToggles } from '@/lib/catalog'
+import {
+  VERTICALS, TASKS, SPEED_TIERS, TOGGLES, NO_TOGGLES,
+  presetsFor, defaultCounts, quoteEvent, modelsFor,
+} from '@/lib/catalog'
+
+const inputCls =
+  'w-full rounded-lg border border-canvas-border bg-canvas-surface px-3 py-2 text-[15px] text-fg outline-none focus:border-accent'
+
+/** A selectable model/style row showing its name, what it does, and its SOTA base. */
+function StyleOption({ name, blurb, base, selected, onPick }: {
+  name: string; blurb?: string; base?: string; selected: boolean; onPick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="block w-full rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-canvas-surface"
+      style={selected ? { background: 'var(--tint)', boxShadow: 'inset 0 0 0 1px var(--accent)' } : undefined}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[14px] font-medium text-fg">{name}</span>
+        {base && <span className="shrink-0 rounded bg-canvas-border/60 px-1.5 py-0.5 text-[10px] text-fg-faint">{base}</span>}
+      </div>
+      {blurb && <div className="mt-0.5 text-[12px] text-fg-subtle">{blurb}</div>}
+    </button>
+  )
+}
+
+/**
+ * The browser Event Builder — the warm-premium twin of the desktop NewEvent.
+ * Pick your world → a preset → how many → how fast, and get a fixed,
+ * never-billed-over quote (computed by the shared catalog; equal to the bill).
+ *
+ * v1 is the quote/build surface; sign-in + upload/connect-storage for actual
+ * submission is the next slice (auth + browser pipeline).
+ */
+export function AppPage() {
+  const [vertical, setVertical] = useState<Vertical | null>(() => {
+    const saved = localStorage.getItem('ucin.vertical')
+    return saved && saved in VERTICALS ? (saved as Vertical) : null
+  })
+  const activeVertical: Vertical = vertical ?? 'photo'
+  const presets = useMemo(() => presetsFor(activeVertical), [activeVertical])
+  const [presetId, setPresetId] = useState(presets[0]?.id ?? '')
+  const preset = presets.find((p) => p.id === presetId) ?? presets[0]
+  const labels = VERTICALS[activeVertical]
+
+  const [name, setName] = useState('')
+  const [totalItems, setTotalItems] = useState(0)
+  const [counts, setCounts] = useState<Record<string, number>>({})
+  const [speedId, setSpeedId] = useState<Tier>('flex')
+  const [modelId, setModelId] = useState('')
+  const [toggles, setToggles] = useState<EventToggles>(NO_TOGGLES)
+  const [started, setStarted] = useState(false)
+  const [authed, setAuthed] = useState<boolean>(() => !!getToken())
+  const [aiGoal, setAiGoal] = useState('')
+  const [aiPlan, setAiPlan] = useState<AssistantPlan | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiErr, setAiErr] = useState('')
+  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null)
+  const [workflows, setWorkflows] = useState<Workflow[]>([])
+  const [myModels, setMyModels] = useState<MyModel[]>([])
+  const [aiOpen, setAiOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Capture the token Google SSO returns as ?token=… then clean the URL.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('token')
+    if (t) {
+      setToken(t)
+      setAuthed(true)
+      window.history.replaceState({}, '', '/app')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authed) return
+    void getStyleProfile().then(setStyleProfile).catch(() => undefined)
+    void listWorkflows().then(setWorkflows).catch(() => undefined)
+    void listMyModels().then(setMyModels).catch(() => undefined)
+  }, [authed])
+
+  useEffect(() => {
+    if (vertical) localStorage.setItem('ucin.vertical', vertical)
+    setPresetId(presets[0]?.id ?? '')
+  }, [vertical]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pickVertical = (v: Vertical): void => {
+    localStorage.setItem('ucin.vertical', v)
+    setVertical(v)
+  }
+
+  useEffect(() => {
+    if (preset) setCounts(defaultCounts(preset, totalItems))
+  }, [presetId, totalItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const lines = (preset?.tasks ?? []).map((t) => ({ taskId: t.taskId, count: counts[t.taskId] ?? 0 }))
+  const quote = quoteEvent(lines, speedId, toggles)
+  const speed = SPEED_TIERS.find((s) => s.id === speedId)!
+
+  const setCount = (taskId: TaskId, value: number): void =>
+    setCounts((c) => ({ ...c, [taskId]: Math.max(0, Math.round(value || 0)) }))
+
+  const runAssistant = async (): Promise<void> => {
+    setAiBusy(true)
+    setAiErr('')
+    try {
+      setAiPlan(await planEvent(aiGoal, vertical ?? undefined, totalItems || undefined))
+    } catch (e) {
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setAiErr(detail ?? 'Could not reach the assistant.')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
+  const applyPlan = (): void => {
+    if (!aiPlan) return
+    const fallback = totalItems || aiPlan.lines.reduce((m, l) => Math.max(m, l.count ?? 0), 0)
+    if (!totalItems && fallback) setTotalItems(fallback)
+    setCounts((c) => ({
+      ...c,
+      ...Object.fromEntries(aiPlan.lines.map((l) => [l.action_id, l.count ?? fallback])),
+    }))
+    if (aiPlan.speed && SPEED_TIERS.some((s) => s.id === aiPlan.speed)) setSpeedId(aiPlan.speed as Tier)
+  }
+
+  const saveWorkflow = async (): Promise<void> => {
+    const name = window.prompt('Name this workflow (e.g. "Wedding — full edit")')?.trim()
+    if (!name) return
+    const client = window.prompt('Client name (optional)')?.trim() || undefined
+    try {
+      await createWorkflow(name, client, { vertical, presetId, speedId, toggles, modelId, totalItems })
+      setWorkflows(await listWorkflows())
+    } catch { /* non-critical */ }
+  }
+
+  const applyWorkflow = (w: Workflow): void => {
+    const c = w.config as {
+      vertical?: Vertical; presetId?: string; speedId?: Tier
+      toggles?: EventToggles; modelId?: string; totalItems?: number
+    }
+    if (typeof c.totalItems === 'number') setTotalItems(c.totalItems)
+    if (c.speedId) setSpeedId(c.speedId)
+    if (c.toggles) setToggles(c.toggles)
+    if (c.modelId) setModelId(c.modelId)
+    if (c.vertical) setVertical(c.vertical)
+    // preset is restored after the vertical effect (which resets it) settles
+    if (c.presetId) setTimeout(() => setPresetId(c.presetId as string), 0)
+  }
+
+  const removeWorkflow = async (id: string): Promise<void> => {
+    try {
+      await deleteWorkflow(id)
+      setWorkflows((w) => w.filter((x) => x.id !== id))
+    } catch { /* non-critical */ }
+  }
+
+  if (!vertical) return <Onboarding onPick={pickVertical} />
+
+  return (
+    <div className="min-h-screen">
+      {/* App bar */}
+      <header className="border-b border-canvas-border">
+        <div className="max-w-6xl mx-auto flex h-16 items-center justify-between px-6">
+          <a href="/" aria-label="UCIN Studio"><Logo /></a>
+          <div className="flex items-center gap-5">
+            <div className="relative">
+              <button
+                onClick={() => setSettingsOpen((o) => !o)}
+                className="flex items-center gap-1.5 text-[13px] text-fg-subtle hover:text-fg"
+                aria-label="Settings"
+              >
+                <Settings size={16} />
+              </button>
+              {settingsOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-56 rounded-lg border p-1.5 z-50"
+                  style={{ background: 'var(--bg)', borderColor: 'var(--border)', boxShadow: '0 10px 30px rgba(0,0,0,0.12)' }}
+                >
+                  <div className="px-2.5 py-1.5 text-[11px] text-fg-faint">Workspace · {labels.label}</div>
+                  <button
+                    onClick={() => { setVertical(null); setSettingsOpen(false) }}
+                    className="block w-full rounded-md px-2.5 py-1.5 text-left text-[13px] text-fg hover:bg-canvas-surface"
+                  >
+                    Change workspace
+                  </button>
+                </div>
+              )}
+            </div>
+            {authed ? (
+              <>
+                <a href="/team" className="text-[13px] text-fg-subtle hover:text-fg">Team</a>
+                <button
+                  onClick={() => { clearToken(); location.reload() }}
+                  className="text-[13px] text-fg-subtle hover:text-fg"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <a href="/login" className="text-[13px] font-medium text-accent">Sign in</a>
+            )}
+            <a href="/" className="flex items-center gap-1.5 text-[14px] font-medium text-fg-subtle hover:text-fg">
+              <ArrowLeft size={15} /> Back to site
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-12">
+        <div className="eyebrow mb-3">{labels.newCta}</div>
+        <h1 className="display mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+          Build your edit. See the price up front.
+        </h1>
+        <p className="text-lg text-fg-muted mb-10 max-w-xl">
+          Choose what gets done and how fast — you get one fixed, all-in quote before anything starts.
+          Your work stays encrypted and India-resident.
+        </p>
+
+        {/* Your style — the living profile that compounds with every shoot */}
+        {authed && styleProfile && (
+          <div className="card p-4 mb-6 flex items-center gap-3">
+            <Sparkles size={18} className="text-accent shrink-0" />
+            <div>
+              <div className="text-[14px] font-semibold text-fg">Your style — v{styleProfile.version}</div>
+              <div className="text-[12px] text-fg-subtle mt-0.5">
+                {styleProfile.sample_count > 0
+                  ? `Matched your picks ${styleProfile.match_rate != null ? `${Math.round(styleProfile.match_rate * 100)}%` : '—'} last event · ${styleProfile.sample_count.toLocaleString()} edits learned — it sharpens every shoot.`
+                  : 'Starts learning from your first reviewed event, then gets sharper with every shoot.'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Saved workflows — reusable per-client recipes (workflow embedding) */}
+        {authed && (
+          <div className="card p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="text-[14px] font-semibold text-fg">Saved workflows</div>
+              <button onClick={saveWorkflow} className="text-[12px] font-medium text-accent">Save current setup</button>
+            </div>
+            {workflows.length === 0 ? (
+              <p className="mt-1.5 text-[12px] text-fg-subtle">
+                Save an event setup as a reusable per-client workflow — one click to rerun it next time.
+              </p>
+            ) : (
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {workflows.map((w) => (
+                  <div key={w.id} className="flex items-center gap-1.5 rounded-lg border border-canvas-border px-2.5 py-1.5">
+                    <button onClick={() => applyWorkflow(w)} className="text-[13px] text-fg hover:text-accent">
+                      {w.name}{w.client_name ? <span className="text-fg-faint"> · {w.client_name}</span> : null}
+                    </button>
+                    <button onClick={() => removeWorkflow(w.id)} className="text-fg-faint hover:text-fg" aria-label="Delete workflow">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Assistant — optional, collapsed by default so it doesn't compete with the builder */}
+        <div className="card mb-6">
+          <button
+            onClick={() => setAiOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-2 p-4 text-left"
+          >
+            <span className="flex items-center gap-2 text-[14px] font-semibold text-fg">
+              <Wand2 size={16} className="text-accent" /> Prefer to just describe it? Let the assistant plan the steps
+            </span>
+            <ChevronDown size={16} className="text-fg-faint" style={{ transform: aiOpen ? 'rotate(180deg)' : undefined }} />
+          </button>
+          {aiOpen && (
+          <div className="px-4 pb-4">
+          {authed ? (
+            <>
+              <textarea
+                className={`${inputCls} mt-3 min-h-[64px] resize-y`}
+                value={aiGoal}
+                onChange={(e) => setAiGoal(e.target.value)}
+                placeholder="e.g. Cull the blinks from ~1,800 wedding photos, give them a warm filmic grade, and upscale the 20 hero shots — need it by Friday."
+              />
+              <div className="mt-3 flex items-center gap-3">
+                <button onClick={runAssistant} disabled={aiBusy || !aiGoal.trim()} className="btn-primary">
+                  {aiBusy ? 'Planning…' : 'Plan it'}
+                </button>
+                {aiErr && <span className="text-[13px] text-fg-muted">{aiErr}</span>}
+              </div>
+              {aiPlan && (
+                <div className="mt-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--tint-border)', background: 'var(--tint)' }}>
+                  <div className="text-[14px] text-fg">{aiPlan.rationale}</div>
+                  <ul className="mt-2 space-y-1">
+                    {aiPlan.lines.map((l, i) => (
+                      <li key={i} className="text-[13px] text-fg-subtle">
+                        • <span className="text-fg">{TASKS[l.action_id as TaskId]?.label ?? l.action_id}</span>
+                        {l.count != null && ` — ${l.count.toLocaleString()}`}
+                        {l.note && <span className="text-fg-faint"> · {l.note}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={applyPlan} className="btn-line mt-3">Use this plan</button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 text-[13px] text-fg-muted">
+              <a href="/login" className="text-accent font-medium">Sign in</a> to use the assistant.
+            </p>
+          )}
+          </div>
+          )}
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* ── Build ─────────────────────────────────────────────── */}
+          <div className="card p-7 space-y-6">
+            <Field label={`${labels.object} name`}>
+              <input
+                className={inputCls}
+                placeholder={`e.g. ${preset?.label ?? 'Untitled'} · Dec 3`}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+
+            <Field label="Preset" hint="A ready-made recipe — fine-tune the steps below.">
+              <div className="grid gap-2">
+                {presets.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setPresetId(p.id)}
+                    className="rounded-xl border px-4 py-3 text-left transition-colors"
+                    style={presetId === p.id
+                      ? { borderColor: 'var(--accent)', background: 'var(--tint)' }
+                      : { borderColor: 'var(--border)' }}
+                  >
+                    <div className="text-[15px] font-medium text-fg">{p.label}</div>
+                    <div className="mt-0.5 text-[13px] text-fg-subtle">{p.blurb}</div>
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label={`How many ${labels.object.toLowerCase()} items?`} hint="The number of photos / frames in this job.">
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={totalItems || ''}
+                onChange={(e) => setTotalItems(Math.max(0, Math.round(Number(e.target.value) || 0)))}
+                placeholder="e.g. 1800"
+              />
+            </Field>
+
+            {totalItems > 0 && (
+              <Field label="Steps" hint="Auto-filled from the preset — edit any count.">
+                <div className="space-y-2">
+                  {(preset?.tasks ?? []).map((t) => {
+                    const def = TASKS[t.taskId]
+                    return (
+                      <div key={t.taskId} className="flex items-center justify-between gap-3 rounded-lg border border-canvas-border px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="text-[14px] text-fg">{def.label}</div>
+                          <div className="text-[12px] text-fg-faint">{fmtINR(def.flatRateInr)} / {def.unit}</div>
+                        </div>
+                        <input
+                          type="number"
+                          min={0}
+                          className={`${inputCls} w-24 text-right`}
+                          value={counts[t.taskId] ?? 0}
+                          onChange={(e) => setCount(t.taskId, Number(e.target.value))}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </Field>
+            )}
+
+            <Field label="Style / model" hint="A model tuned for your work — or bring your own.">
+              <div className="max-h-72 space-y-1 overflow-y-auto rounded-lg border border-canvas-border p-1.5">
+                <StyleOption
+                  name="Auto — best for each step"
+                  blurb="We pick the right model for every step"
+                  selected={modelId === ''}
+                  onPick={() => setModelId('')}
+                />
+                {authed && (
+                  <>
+                    <div className="px-2 pt-2 text-[10px] font-semibold uppercase tracking-wide text-fg-faint">Your models</div>
+                    {myModels.length > 0 ? (
+                      myModels.map((m) => (
+                        <StyleOption
+                          key={m.model_id}
+                          name={m.name}
+                          blurb={m.description || m.base_model}
+                          base={m.status === 'ready' ? 'Yours' : m.status}
+                          selected={modelId === m.model_id}
+                          onPick={() => setModelId(m.model_id)}
+                        />
+                      ))
+                    ) : (
+                      <div className="px-2.5 py-1.5 text-[12px] text-fg-subtle">None yet — train or import one in the desktop app.</div>
+                    )}
+                  </>
+                )}
+                <div className="px-2 pt-2 text-[10px] font-semibold uppercase tracking-wide text-fg-faint">UCIN looks</div>
+                {modelsFor(activeVertical).map((m) => (
+                  <StyleOption
+                    key={m.id}
+                    name={m.name}
+                    blurb={m.blurb}
+                    base={m.base}
+                    selected={modelId === m.id}
+                    onPick={() => setModelId(m.id)}
+                  />
+                ))}
+              </div>
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-canvas-border px-3 py-2.5">
+                <Download size={15} className="mt-0.5 shrink-0 text-accent" />
+                <div className="text-[12px] text-fg-subtle">
+                  <span className="font-medium text-fg">Train your own style</span> — learn from your past edits or import any Hugging Face model in the{' '}
+                  <span className="text-fg">UCIN desktop app</span>. It’ll appear here under <span className="text-fg">Your models</span>, on this account.
+                </div>
+              </div>
+            </Field>
+
+            <Field label="When do you need it?">
+              <div className="grid grid-cols-3 gap-2">
+                {SPEED_TIERS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSpeedId(s.id)}
+                    className="rounded-xl border px-3 py-3 text-left transition-colors"
+                    style={speedId === s.id
+                      ? { borderColor: 'var(--accent)', background: 'var(--tint)' }
+                      : { borderColor: 'var(--border)' }}
+                  >
+                    <div className="flex items-center gap-1.5 text-[14px] font-medium text-fg">
+                      <Clock size={13} /> {s.label}
+                    </div>
+                    <div className="mt-1 text-[12px] leading-snug text-fg-subtle">{s.promise}</div>
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Add-ons" hint="Optional — priced into the quote.">
+              <div className="space-y-2">
+                {TOGGLES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setToggles((s) => ({ ...s, [t.id]: !s[t.id] }))}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
+                    style={toggles[t.id]
+                      ? { borderColor: 'var(--accent)', background: 'var(--tint)' }
+                      : { borderColor: 'var(--border)' }}
+                  >
+                    <div className="min-w-0">
+                      <div className="text-[15px] font-medium text-fg">{t.label}</div>
+                      <div className="mt-0.5 text-[13px] text-fg-subtle">{t.blurb}</div>
+                    </div>
+                    <span className="shrink-0 text-[13px]" style={{ color: toggles[t.id] ? 'var(--accent)' : 'var(--fg-faint)' }}>
+                      {toggles[t.id] ? 'Added' : t.kind === 'pct' ? `+${Math.round(t.amount * 100)}%` : `+₹${t.amount}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+
+          {/* ── Quote ─────────────────────────────────────────────── */}
+          <div className="lg:sticky lg:top-8 self-start card p-7"
+            style={{ background: 'var(--tint)', borderColor: 'var(--tint-border)' }}>
+            <div className="eyebrow mb-4">Your quote</div>
+
+            <div className="display text-fg" style={{ fontSize: 'clamp(2.4rem, 5vw, 3.4rem)' }}>
+              {fmtINR(quote.totalInr)}
+            </div>
+            <p className="mt-1 text-[14px] text-fg-subtle">
+              {speed.label} · {speed.promise.toLowerCase()}
+            </p>
+
+            <div className="mt-6 space-y-1.5">
+              {quote.lines.length === 0 ? (
+                <p className="py-6 text-center text-[14px] text-fg-subtle">
+                  Pick a preset and enter how many to see the price.
+                </p>
+              ) : (
+                <>
+                  {quote.lines.map((l) => (
+                    <div key={l.taskId} className="flex items-center justify-between text-[14px]">
+                      <span className="text-fg-muted">
+                        {l.label} · {l.count.toLocaleString('en-IN')} {l.unit}{l.count !== 1 ? 's' : ''}
+                      </span>
+                      <span className="text-fg">{fmtINR(l.lineTotal)}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between border-t border-canvas-border pt-1.5 text-[14px]">
+                    <span className="text-fg-muted">Base fee</span>
+                    <span className="text-fg">{fmtINR(quote.baseFeeInr)}</span>
+                  </div>
+                  {quote.multiplier !== 1 && (
+                    <div className="flex items-center justify-between text-[14px]">
+                      <span className="text-fg-muted">{speed.label} speed</span>
+                      <span className="text-fg">×{quote.multiplier}</span>
+                    </div>
+                  )}
+                  {quote.toggleLines.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between text-[14px]">
+                      <span className="text-fg-muted">{t.label}</span>
+                      <span className="text-fg">{fmtINR(t.amountInr)}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <ul className="mt-6 space-y-1.5 text-[12px] text-fg-subtle">
+              <li className="flex items-start gap-1.5">
+                <ShieldCheck size={13} className="mt-0.5 shrink-0 text-accent" />
+                Fixed price — never billed above this
+              </li>
+              <li className="flex items-start gap-1.5">
+                <ShieldCheck size={13} className="mt-0.5 shrink-0 text-accent" />
+                Encrypted &amp; India-resident — your work stays yours
+              </li>
+            </ul>
+
+            {!authed ? (
+              <a
+                href="/login"
+                className={`btn-primary w-full mt-6 ${quote.lines.length === 0 ? 'pointer-events-none opacity-50' : ''}`}
+              >
+                {quote.lines.length === 0 ? 'Build your quote' : 'Sign in to start'}
+                <ArrowRight size={15} />
+              </a>
+            ) : (
+              <button
+                onClick={() => setStarted(true)}
+                disabled={quote.lines.length === 0}
+                className={`btn-primary w-full mt-6 ${quote.lines.length === 0 ? 'opacity-50' : ''}`}
+              >
+                Start — {fmtINR(quote.totalInr)}
+                <ArrowRight size={15} />
+              </button>
+            )}
+            <p className="mt-3 text-center text-[12px] text-fg-faint">
+              {started
+                ? "You're signed in. Browser submission is rolling out — run this now in the desktop app."
+                : 'Large local libraries? Run it in the desktop app.'}
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div>
+      <label className="text-[13px] font-medium text-fg">{label}</label>
+      {hint ? <p className="mb-2 text-[12px] text-fg-faint">{hint}</p> : <div className="mb-2" />}
+      {children}
+    </div>
+  )
+}
+
