@@ -13,6 +13,9 @@ import {
   VERTICALS, TASKS, SPEED_TIERS, TOGGLES, NO_TOGGLES,
   presetsFor, defaultCounts, quoteEvent, modelsFor,
 } from '@/lib/catalog'
+import { checkBatch, fmtBytes, deliveryInr, DESKTOP_INSTALL_CMD } from '@/lib/batch'
+import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
+import type { ResultArtifact } from '@/api/pipeline'
 
 const inputCls =
   'w-full rounded-lg border border-canvas-border bg-canvas-surface px-3 py-2 text-[15px] text-fg outline-none focus:border-accent'
@@ -62,7 +65,10 @@ export function AppPage() {
   const [speedId, setSpeedId] = useState<Tier>('flex')
   const [modelId, setModelId] = useState('')
   const [toggles, setToggles] = useState<EventToggles>(NO_TOGGLES)
-  const [started, setStarted] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  const [phase, setPhase] = useState<SubmitProgress | null>(null)
+  const [result, setResult] = useState<{ jobId: string; status: string; artifacts: ResultArtifact[] } | null>(null)
+  const [submitErr, setSubmitErr] = useState('')
   const [authed, setAuthed] = useState<boolean>(() => !!getToken())
   const [aiGoal, setAiGoal] = useState('')
   const [aiPlan, setAiPlan] = useState<AssistantPlan | null>(null)
@@ -108,6 +114,33 @@ export function AppPage() {
   const lines = (preset?.tasks ?? []).map((t) => ({ taskId: t.taskId, count: counts[t.taskId] ?? 0 }))
   const quote = quoteEvent(lines, speedId, toggles)
   const speed = SPEED_TIERS.find((s) => s.id === speedId)!
+
+  // ── Browser submission: small single-step batches only; the rest → desktop ──
+  const batch = checkBatch(files)
+  const singleTask = quote.lines.length === 1 ? quote.lines[0] : null
+  const actionId = singleTask ? TASKS[singleTask.taskId].actionId : null
+  const multiStep = quote.lines.length > 1
+  const browserAction = !!actionId && BROWSER_ACTIONS.has(actionId)
+  const needsDesktop = files.length > 0 && (multiStep || !batch.ok || !browserAction)
+  const canBrowserSubmit = authed && files.length > 0 && browserAction && batch.ok && !multiStep
+  const submitting = !!phase && phase.phase !== 'error' && phase.phase !== 'done' && !result
+  const delivery = canBrowserSubmit ? deliveryInr(batch.totalBytes) : 0
+  const grandTotal = quote.totalInr + delivery
+
+  const runSubmit = async (): Promise<void> => {
+    if (!actionId || !singleTask) return
+    setSubmitErr(''); setResult(null)
+    try {
+      const res = await submitBrowserJob(
+        { files, actionId, tier: speedId, itemCount: singleTask.count || files.length, privacy: toggles.privacy },
+        setPhase,
+      )
+      setResult(res)
+    } catch (e) {
+      setSubmitErr(e instanceof Error ? e.message : 'Submission failed')
+      setPhase({ phase: 'error', done: 0, total: 0 })
+    }
+  }
 
   const setCount = (taskId: TaskId, value: number): void =>
     setCounts((c) => ({ ...c, [taskId]: Math.max(0, Math.round(value || 0)) }))
@@ -523,6 +556,12 @@ export function AppPage() {
                       <span className="text-fg">{fmtINR(t.amountInr)}</span>
                     </div>
                   ))}
+                  {delivery > 0 && (
+                    <div className="flex items-center justify-between text-[14px]">
+                      <span className="text-fg-muted">Delivery · {fmtBytes(batch.totalBytes)}</span>
+                      <span className="text-fg">{fmtINR(delivery)}</span>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -546,26 +585,112 @@ export function AppPage() {
                 {quote.lines.length === 0 ? 'Build your quote' : 'Sign in to start'}
                 <ArrowRight size={15} />
               </a>
-            ) : (
-              <button
-                onClick={() => setStarted(true)}
-                disabled={quote.lines.length === 0}
-                className={`btn-primary w-full mt-6 ${quote.lines.length === 0 ? 'opacity-50' : ''}`}
-              >
-                Start — {fmtINR(quote.totalInr)}
-                <ArrowRight size={15} />
+            ) : quote.lines.length === 0 ? (
+              <button disabled className="btn-primary w-full mt-6 opacity-50">
+                Build your quote <ArrowRight size={15} />
               </button>
+            ) : (
+              <div className="mt-6 space-y-3">
+                <label className="btn-line w-full cursor-pointer">
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { setFiles(Array.from(e.target.files ?? [])); setResult(null); setPhase(null); setSubmitErr('') }}
+                  />
+                  {files.length
+                    ? `${files.length} file${files.length > 1 ? 's' : ''} · ${fmtBytes(batch.totalBytes)}`
+                    : 'Add your files'}
+                </label>
+
+                {needsDesktop && (
+                  <div className="rounded-lg border px-3 py-3" style={{ borderColor: 'var(--tint-border)', background: 'var(--tint)' }}>
+                    <div className="text-[13px] font-semibold text-fg">
+                      {multiStep
+                        ? 'Multi-step builds run in the desktop app.'
+                        : 'For your file size we recommend the UCIN Studio desktop app.'}
+                    </div>
+                    <div className="mt-1 text-[12.5px] text-fg-subtle">
+                      {multiStep
+                        ? 'This build has more than one step — the desktop app runs the whole pipeline locally.'
+                        : 'Larger batches process cheaper on the desktop — only tiny proxies ever leave your machine.'}
+                    </div>
+                    <code className="mt-2 block rounded bg-canvas-sunk px-2 py-1.5 mono text-[12px] text-fg">{DESKTOP_INSTALL_CMD}</code>
+                    <a
+                      href="/#desktop"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-line mt-3 w-full text-[13px]"
+                    >
+                      How to install the desktop app <ArrowRight size={14} />
+                    </a>
+                  </div>
+                )}
+
+                {phase && phase.phase !== 'error' && !result && (
+                  <div className="rounded-lg border border-canvas-border px-3 py-2.5">
+                    <div className="flex items-center justify-between text-[13px]">
+                      <span className="text-fg">{phaseLabel(phase.phase)}{phase.message ? ` · ${phase.message}` : ''}</span>
+                      {phase.total > 1 && <span className="mono text-fg-faint">{phase.done}/{phase.total}</span>}
+                    </div>
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-canvas-sunk">
+                      <div className="h-full rounded-full" style={{ width: `${phase.total ? Math.round((phase.done / phase.total) * 100) : 30}%`, background: 'var(--accent)' }} />
+                    </div>
+                  </div>
+                )}
+
+                {result && (
+                  <div className="rounded-lg border border-canvas-border px-3 py-3">
+                    <div className="text-[13px] font-semibold text-fg">Job {result.status} · {result.jobId.slice(0, 8)}</div>
+                    {result.artifacts.length > 0 ? (
+                      <ul className="mt-2 space-y-1">
+                        {result.artifacts.map((a) => (
+                          <li key={a.filename}>
+                            <a href={a.download_url} className="link-arrow text-[13px]" download>{a.filename} <Download size={13} /></a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="mt-1 text-[12.5px] text-fg-subtle">Results will appear here when they&apos;re ready.</div>
+                    )}
+                  </div>
+                )}
+
+                {submitErr && (
+                  <div className="text-[13px]" style={{ color: '#c0362c' }}>
+                    {submitErr}
+                    <div className="mt-0.5 text-fg-faint">Your uploaded files are saved — Resume picks up where it stopped.</div>
+                  </div>
+                )}
+
+                {canBrowserSubmit && !result && (
+                  <button onClick={runSubmit} disabled={submitting} className={`btn-primary w-full ${submitting ? 'opacity-60' : ''}`}>
+                    {submitting ? 'Submitting…' : submitErr ? 'Resume upload' : `Start — ${fmtINR(grandTotal)}`}
+                    <ArrowRight size={15} />
+                  </button>
+                )}
+
+                {files.length === 0 && (
+                  <p className="text-center text-[12px] text-fg-faint">
+                    Add files (up to 5 GB) to submit in the browser — larger or multi-step jobs run in the desktop app.
+                  </p>
+                )}
+              </div>
             )}
-            <p className="mt-3 text-center text-[12px] text-fg-faint">
-              {started
-                ? "You're signed in. Browser submission is rolling out — run this now in the desktop app."
-                : 'Large local libraries? Run it in the desktop app.'}
-            </p>
           </div>
         </div>
       </main>
     </div>
   )
+}
+
+function phaseLabel(p: SubmitProgress['phase']): string {
+  const map: Record<SubmitProgress['phase'], string> = {
+    encrypting: 'Encrypting locally', uploading: 'Uploading', estimating: 'Quoting',
+    auditing: 'Security check', deploying: 'Deploying', sealing: 'Sealing keys',
+    running: 'Processing', done: 'Done', error: 'Error',
+  }
+  return map[p] ?? p
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
