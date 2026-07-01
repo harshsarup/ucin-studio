@@ -444,7 +444,7 @@ export function AppPage() {
                         />
                       ))
                     ) : (
-                      <div className="px-2.5 py-1.5 text-[12px] text-fg-subtle">None yet — train or import one in the desktop app.</div>
+                      <div className="px-2.5 py-1.5 text-[12px] text-fg-subtle">None yet — train or import one in the <a href="/#desktop" target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">desktop app</a>.</div>
                     )}
                   </>
                 )}
@@ -464,7 +464,7 @@ export function AppPage() {
                 <Download size={15} className="mt-0.5 shrink-0 text-accent" />
                 <div className="text-[12px] text-fg-subtle">
                   <span className="font-medium text-fg">Train your own style</span> — learn from your past edits or import any Hugging Face model in the{' '}
-                  <span className="text-fg">UCIN desktop app</span>. It’ll appear here under <span className="text-fg">Your models</span>, on this account.
+                  <a href="/#desktop" target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">UCIN desktop app</a>. It’ll appear here under <span className="text-fg">Your models</span>, on this account.
                 </div>
               </div>
             </Field>
