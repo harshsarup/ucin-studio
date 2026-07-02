@@ -59,10 +59,8 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--fg-faint); }
 
-  /* Lenis smooth-scroll */
-  html.lenis, html.lenis body { height: auto; }
-  .lenis.lenis-smooth { scroll-behavior: auto !important; }
-  .lenis.lenis-stopped { overflow: hidden; }
+  /* Native smooth-scroll: anchor jumps clear the fixed navbar */
+  section[id] { scroll-margin-top: 5rem; }
 }
 
 @layer components {

@@ -7,7 +7,11 @@ import axios from 'axios'
  * as a Bearer token (see api/config.ts interceptor) so /customer calls are authed.
  * Email/password is free; Google/Microsoft OAuth buttons layer on later.
  */
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
+// Same universal resolution as api/config.ts: always the live Control Plane in
+// production, '' in dev (Vite proxies /auth), VITE_API_BASE overrides.
+const API_BASE =
+  (import.meta.env.VITE_API_BASE as string | undefined) ||
+  (import.meta.env.PROD ? 'https://api.ucin.in' : '')
 const http = axios.create({ baseURL: API_BASE, timeout: 20_000 })
 
 export interface AuthAccount {
@@ -28,10 +32,33 @@ interface TokenResponse {
 }
 
 const TOKEN_KEY = 'ucin.token'
+const EXP_KEY = 'ucin.token_exp'
 
-export const getToken = (): string | null => localStorage.getItem(TOKEN_KEY)
-export const setToken = (t: string): void => localStorage.setItem(TOKEN_KEY, t)
-export const clearToken = (): void => localStorage.removeItem(TOKEN_KEY)
+/** Returns the stored JWT, or null if it's missing or past its expiry (which we
+ *  also clear, so an expired Google/email session reads as signed-out). */
+export const getToken = (): string | null => {
+  const t = localStorage.getItem(TOKEN_KEY)
+  if (!t) return null
+  const exp = localStorage.getItem(EXP_KEY)
+  if (exp && Date.now() > new Date(exp).getTime()) {
+    clearToken()
+    return null
+  }
+  return t
+}
+
+/** Persist a session. `expiresAt` (ISO) comes from the token response or the
+ *  OAuth redirect (?expires_at=…) so the client knows when to treat it as stale. */
+export const setToken = (t: string, expiresAt?: string | null): void => {
+  localStorage.setItem(TOKEN_KEY, t)
+  if (expiresAt) localStorage.setItem(EXP_KEY, expiresAt)
+  else localStorage.removeItem(EXP_KEY)
+}
+
+export const clearToken = (): void => {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(EXP_KEY)
+}
 
 export async function login(email: string, password: string, totpCode?: string): Promise<AuthAccount> {
   const { data } = await http.post<TokenResponse>('/auth/login', {
@@ -39,13 +66,13 @@ export async function login(email: string, password: string, totpCode?: string):
     password,
     ...(totpCode ? { totp_code: totpCode } : {}),
   })
-  setToken(data.token)
+  setToken(data.token, data.expires_at)
   return data.account
 }
 
 export async function signup(email: string, password: string): Promise<AuthAccount> {
   const { data } = await http.post<TokenResponse>('/auth/signup', { email, password })
-  setToken(data.token)
+  setToken(data.token, data.expires_at)
   return data.account
 }
 

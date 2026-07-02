@@ -43,7 +43,7 @@ export function ForStudios() {
 
         {/* two doors */}
         <div className="grid md:grid-cols-2 gap-5 mt-14">
-          <div id="studios" className="card p-8 scroll-mt-24 transition-transform duration-200 hover:-translate-y-0.5">
+          <div className="card p-8 transition-transform duration-200 hover:-translate-y-0.5">
             <div className="eyebrow mb-4">For studios &amp; agencies</div>
             <h3 className="display text-2xl text-fg">Scale your studio, not your stress.</h3>
             <p className="mt-3 text-[15px] leading-relaxed text-fg-subtle">
@@ -51,9 +51,9 @@ export function ForStudios() {
               SLA-backed delivery, confidentiality and white-label, plus dedicated onboarding and a
               named point of contact.
             </p>
-            <a href="/app?signup=1" className="link-arrow mt-5">Talk to our studio team <ArrowRight size={15} /></a>
+            <a href="/contact?topic=studio" className="link-arrow mt-5">Talk to our studio team <ArrowRight size={15} /></a>
           </div>
-          <div id="creators" className="card p-8 scroll-mt-24 transition-transform duration-200 hover:-translate-y-0.5">
+          <div className="card p-8 transition-transform duration-200 hover:-translate-y-0.5">
             <div className="eyebrow mb-4">For creators &amp; influencers</div>
             <h3 className="display text-2xl text-fg">Studio results, solo.</h3>
             <p className="mt-3 text-[15px] leading-relaxed text-fg-subtle">

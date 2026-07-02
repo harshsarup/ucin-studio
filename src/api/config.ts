@@ -1,7 +1,12 @@
 import axios from 'axios'
 
-// Prod: VITE_API_BASE = https://api.ucin.in. Dev: empty → vite proxies /customer.
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
+// The backend is always the live Control Plane so nothing needs configuring:
+//   • an explicit VITE_API_BASE wins (custom deploy),
+//   • a production build defaults to https://api.ucin.in,
+//   • dev uses '' so Vite proxies /customer + /auth to the local backend.
+export const API_BASE =
+  (import.meta.env.VITE_API_BASE as string | undefined) ||
+  (import.meta.env.PROD ? 'https://api.ucin.in' : '')
 export const api = axios.create({ baseURL: API_BASE, timeout: 20_000 })
 
 // Attach the auth token (set by api/auth.ts) to every Control-Plane call.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowRight, Check, ShieldCheck, Cpu, FolderSearch, Workflow, Sparkles } from 'lucide-react'
+import { Check, ShieldCheck, Cpu, FolderSearch, Workflow, Sparkles } from 'lucide-react'
 import { Reveal } from '@/components/Reveal'
 import { NetworkViz } from '@/components/NetworkViz'
 
@@ -88,9 +88,6 @@ export function NetworkShowcase() {
               <span>Intelligent routing</span><span aria-hidden>·</span>
               <span>India-resident</span>
             </div>
-          </Reveal>
-          <Reveal delay={0.22}>
-            <a href="#how" className="link-arrow mt-8">How it works <ArrowRight size={15} /></a>
           </Reveal>
         </div>
 

@@ -153,10 +153,6 @@ export function DesktopDownload() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-wrap gap-3">
-          <a href="/app" className="btn-primary">Back to the app</a>
-          <a href="/#pricing" className="btn-line">See pricing</a>
-        </div>
       </main>
       <Footer />
     </div>

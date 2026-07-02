@@ -33,7 +33,7 @@ export function WorkShowcase() {
           {TILES.map((t, i) => (
             <Reveal key={t.id} delay={i * 0.06}>
               <div className="group relative overflow-hidden rounded-xl aspect-[4/3]">
-                <img src={pxSrc(t.id)} alt={t.tag} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]" />
+                <img src={pxSrc(t.id)} alt={t.tag} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]" />
                 <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: 'linear-gradient(to top, rgba(10,16,32,0.80), rgba(10,16,32,0.05) 55%)' }} />
                 <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white" style={{ background: 'rgba(10,16,32,0.55)', backdropFilter: 'blur(4px)' }}>
                   {t.tag}

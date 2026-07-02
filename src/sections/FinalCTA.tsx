@@ -24,12 +24,9 @@ export function FinalCTA({ palette }: { palette: Theme }) {
           </p>
         </Reveal>
         <Reveal delay={0.16}>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <a href="/app?signup=1" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold text-white" style={{ background: palette.accent, boxShadow: `0 14px 30px -10px ${palette.accent}` }}>
+          <div className="mt-10 flex items-center justify-center">
+            <a href="/app?signup=1" className="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white" style={{ background: palette.accent, boxShadow: `0 14px 30px -10px ${palette.accent}` }}>
               Start creating <ArrowRight size={17} />
-            </a>
-            <a href="/app" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold" style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(6px)', color: SLATE }}>
-              Build a quote first
             </a>
           </div>
           <p className="mt-6 mono text-[12px] uppercase tracking-[0.12em]" style={{ color: SUB }}>No card to build a quote · encrypted &amp; India-resident</p>

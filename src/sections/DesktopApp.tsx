@@ -3,7 +3,7 @@ import { Reveal } from '@/components/Reveal'
 import { CliInstall } from '@/components/CliInstall'
 import {
   ShieldCheck, Sparkles, Activity, Folder, Terminal,
-  LayoutDashboard, Plus, Briefcase, Star, Box,
+  LayoutDashboard, Plus, Briefcase, Star, Box, ArrowRight,
 } from 'lucide-react'
 
 const NAV = [
@@ -52,6 +52,10 @@ export function DesktopApp() {
               library, encrypts on-device, and runs the whole pipeline on the network while your
               originals never leave your machine.
             </p>
+          </Reveal>
+
+          <Reveal delay={0.13} className="mt-5">
+            <a href="/download" className="link-arrow">Read the installation guide <ArrowRight size={15} /></a>
           </Reveal>
 
           {/* install callout — no installer, just npx */}

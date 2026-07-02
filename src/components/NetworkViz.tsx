@@ -81,12 +81,18 @@ export function NetworkViz({ className, style }: { className?: string; style?: R
         g!.beginPath(); g!.arc(x, y, 1.7, 0, 6.28); g!.fill()
         return true
       })
-      if (!reduced) raf = requestAnimationFrame(frame)
+      if (!reduced && running) raf = requestAnimationFrame(frame)
     }
+    let running = false
+    const start = () => { if (running || reduced) return; running = true; raf = requestAnimationFrame(frame) }
+    const stop = () => { running = false; cancelAnimationFrame(raf); raf = 0 }
     resize()
-    raf = requestAnimationFrame(frame)
+    frame(0) // initial paint (also the static frame for reduced-motion)
+    // Only run the loop while the panel is on-screen.
+    const io = new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), { threshold: 0 })
+    io.observe(cv)
     window.addEventListener('resize', resize)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+    return () => { stop(); io.disconnect(); window.removeEventListener('resize', resize) }
   }, [reduced])
 
   return <canvas ref={ref} aria-hidden className={className} style={{ width: '100%', height: '100%', display: 'block', ...style }} />

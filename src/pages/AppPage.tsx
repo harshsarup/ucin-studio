@@ -80,11 +80,12 @@ export function AppPage() {
   const [aiOpen, setAiOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Capture the token Google SSO returns as ?token=… then clean the URL.
+  // Capture the token Google SSO returns as ?token=…&expires_at=… then clean the URL.
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get('token')
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get('token')
     if (t) {
-      setToken(t)
+      setToken(t, params.get('expires_at'))
       setAuthed(true)
       window.history.replaceState({}, '', '/app')
     }

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useInView, useReducedMotion } from 'framer-motion'
 
 const COLS = 12
-const COUNT = 96
+const COUNT = 60
 
 /**
  * A dense wall of frames that grade (grayscale → colour) in a diagonal wave when
@@ -27,8 +27,9 @@ export function VolumeGrid() {
               src={`https://picsum.photos/seed/vol${i}/80/80`}
               alt=""
               loading="lazy"
+              decoding="async"
               className="aspect-square w-full object-cover rounded-[3px]"
-              style={{ filter: on ? 'grayscale(0)' : 'grayscale(1) brightness(0.82)', transition: 'filter .55s ease', transitionDelay: `${delay}ms` }}
+              style={{ backgroundColor: 'var(--sunk)', filter: on ? 'grayscale(0)' : 'grayscale(1) brightness(0.82)', transition: 'filter .55s ease', transitionDelay: `${delay}ms` }}
             />
           )
         })}

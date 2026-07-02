@@ -77,7 +77,7 @@ export function Pricing() {
                 library across teams, and secure, confidential processing with India data-residency.
               </p>
             </div>
-            <a href="mailto:hello@ucin.in" className="btn-line shrink-0">Talk to us <ArrowRight size={16} /></a>
+            <a href="/contact?topic=enterprise" className="btn-line shrink-0">Talk to us <ArrowRight size={16} /></a>
           </div>
         </Reveal>
       </div>

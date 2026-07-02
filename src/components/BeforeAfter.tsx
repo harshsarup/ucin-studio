@@ -54,12 +54,12 @@ export function BeforeAfter({
       onTouchStart={(e) => onDown(e.touches[0].clientX)}
       onTouchMove={(e) => update(e.touches[0].clientX)}
     >
-      <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+      <img src={after} alt={afterLabel} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
       <span className="absolute top-3 right-3 mono text-[10px] font-medium uppercase tracking-[0.12em] px-2.5 py-1 text-white"
         style={{ background: '#0A0A0A' }}>{afterLabel}</span>
 
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-        <img src={before} alt={beforeLabel} className="absolute inset-0 h-full object-cover max-w-none"
+        <img src={before} alt={beforeLabel} loading="lazy" decoding="async" className="absolute inset-0 h-full object-cover max-w-none"
           style={{ width: ref.current?.clientWidth ?? '100%', filter: beforeFilter }} draggable={false} />
         <span className="absolute top-3 left-3 mono text-[10px] font-medium uppercase tracking-[0.12em] px-2.5 py-1"
           style={{ background: '#FFFFFF', color: '#0A0A0A' }}>{beforeLabel}</span>

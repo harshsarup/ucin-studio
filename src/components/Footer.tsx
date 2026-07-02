@@ -7,7 +7,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-14">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div className="lg:col-span-2">
-            <Logo />
+            <a href="/" aria-label="UCIN Studio — home"><Logo /></a>
             <p className="mt-4 text-[15px] text-fg-subtle max-w-sm leading-relaxed">
               The post-production studio inside your studio — the creative layer on UCIN&apos;s
               SLA-backed compute network. Hand off the post; we finish it for you.
@@ -16,18 +16,19 @@ export function Footer() {
           <div>
             <div className="text-xs font-semibold text-fg mb-3 mono tracking-wide">PRODUCT</div>
             <ul className="space-y-2.5 text-[15px] text-fg-subtle">
-              <li><a href="#work" className="hover:text-fg transition-colors">Work</a></li>
-              <li><a href="#studios" className="hover:text-fg transition-colors">For studios</a></li>
-              <li><a href="#platform" className="hover:text-fg transition-colors">Platform</a></li>
+              <li><a href="/#platform" className="hover:text-fg transition-colors">Platform</a></li>
+              <li><a href="/#studios" className="hover:text-fg transition-colors">For studios</a></li>
+              <li><a href="/#pricing" className="hover:text-fg transition-colors">Pricing</a></li>
+              <li><a href="/download" className="hover:text-fg transition-colors">Desktop app</a></li>
               <li><a href="/app" className="hover:text-fg transition-colors">Open Studio</a></li>
             </ul>
           </div>
           <div>
             <div className="text-xs font-semibold text-fg mb-3 mono tracking-wide">COMPANY</div>
             <ul className="space-y-2.5 text-[15px] text-fg-subtle">
-              <li><a href="#" className="hover:text-fg transition-colors">Privacy</a></li>
-              <li><a href="#" className="hover:text-fg transition-colors">Terms</a></li>
-              <li><a href="mailto:hello@ucin.in" className="hover:text-fg transition-colors">Contact</a></li>
+              <li><a href="/contact" className="hover:text-fg transition-colors">Contact</a></li>
+              <li><a href="/privacy" className="hover:text-fg transition-colors">Privacy</a></li>
+              <li><a href="/terms" className="hover:text-fg transition-colors">Terms</a></li>
             </ul>
           </div>
         </div>

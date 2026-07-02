@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { login, signup } from '@/api/auth'
+import { API_BASE } from '@/api/config'
 
 const inputCls =
   'w-full rounded-lg border border-canvas-border bg-canvas-surface px-3 py-2.5 text-[15px] text-fg outline-none focus:border-accent'
@@ -17,10 +18,9 @@ export function Login() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const API = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
-  // Redirect to the backend's Google OAuth initiation route (same-origin when
-  // VITE_API_BASE is unset). Backend must be reachable at this path.
-  const googleHref = `${API}/auth/google/login?next=${encodeURIComponent(window.location.origin + '/app')}`
+  // Kick off Google OAuth on the live Control Plane (API_BASE resolves to
+  // https://api.ucin.in in production, '' → Vite proxy in dev).
+  const googleHref = `${API_BASE}/auth/google/login?next=${encodeURIComponent(window.location.origin + '/app')}`
 
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault()

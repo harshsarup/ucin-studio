@@ -27,7 +27,8 @@ export function MeshGradient({
       bx: Math.random(), by: Math.random(),
     }))
     let raf = 0
-    const render = (t: number) => {
+    let running = false
+    const draw = (t: number) => {
       g.fillStyle = base
       g.fillRect(0, 0, W, H)
       for (const b of blobs) {
@@ -40,11 +41,16 @@ export function MeshGradient({
         g.fillStyle = grd
         g.fillRect(0, 0, W, H)
       }
-      if (!reduced) raf = requestAnimationFrame(render)
     }
-    render(0)
-    if (!reduced) raf = requestAnimationFrame(render)
-    return () => cancelAnimationFrame(raf)
+    const loop = (t: number) => { draw(t); raf = requestAnimationFrame(loop) }
+    const start = () => { if (running || reduced) return; running = true; raf = requestAnimationFrame(loop) }
+    const stop = () => { running = false; cancelAnimationFrame(raf); raf = 0 }
+
+    draw(0) // paint an initial frame so it's never blank (and covers reduced-motion)
+    // Only animate while on-screen — offscreen mesh instances cost nothing.
+    const io = new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), { threshold: 0 })
+    io.observe(cv)
+    return () => { stop(); io.disconnect() }
   }, [base, colors, reduced])
 
   return <canvas ref={ref} aria-hidden className={className} style={{ width: '100%', height: '100%', display: 'block', ...style }} />
