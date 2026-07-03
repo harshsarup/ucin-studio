@@ -9,7 +9,7 @@ const RAW = 'grayscale(1) brightness(0.82) contrast(0.94)'
 const AUD = [
   { word: 'photographers', line: 'Weddings, portraits and events — culled, graded and finished in your signature style.', img: pxSrc('8869381') },
   { word: 'agencies', line: 'On-brand campaign visuals, generated and retouched at volume, on deadline.', img: pxSrc('1834396') },
-  { word: 'e-commerce', line: 'Whole catalogs cut out, standardised and shot-ready overnight.', img: pxSrc('31213033') },
+  { word: 'brands', line: 'Catalogs cut out and standardised, plus lifestyle scenes and social — at volume.', img: pxSrc('31213033') },
   { word: 'creators', line: 'Grade, generate and subtitle for every channel — the moment the content drops.', img: pxSrc('1368384') },
 ]
 
@@ -30,9 +30,9 @@ export function AudienceRotator() {
       <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.15fr] gap-12 lg:gap-16 items-center">
         {/* left — rotating audience headline */}
         <div>
-          <Reveal><div className="eyebrow mb-6">Built for your world</div></Reveal>
+          <Reveal><div className="eyebrow mb-6">In good company</div></Reveal>
           <h2 className="display" style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}>
-            Made for{' '}
+            Trusted by{' '}
             <AnimatePresence mode="wait">
               <motion.span key={a.word} className="text-grad inline-block"
                 initial={reduced ? false : { opacity: 0, y: '0.35em' }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: '-0.35em' }} transition={{ duration: 0.4, ease }}>

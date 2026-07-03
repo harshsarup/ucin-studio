@@ -10,7 +10,7 @@ export type Tier = 'priority' | 'core' | 'flex'
 
 // ── Verticals: one object, labelled for the user's world ──────────────────────
 
-export type Vertical = 'photo' | 'agency' | 'ecom' | 'realestate' | 'creator'
+export type Vertical = 'photo' | 'agency' | 'ecom' | 'creator'
 
 export interface VerticalLabels {
   label: string
@@ -22,8 +22,7 @@ export interface VerticalLabels {
 export const VERTICALS: Record<Vertical, VerticalLabels> = {
   photo:      { label: 'Photographer / Studio', object: 'Shoot',    objectPlural: 'Shoots',    newCta: 'New shoot' },
   agency:     { label: 'Agency',                 object: 'Campaign', objectPlural: 'Campaigns', newCta: 'New campaign' },
-  ecom:       { label: 'E-commerce',             object: 'Catalog',  objectPlural: 'Catalogs',  newCta: 'New catalog' },
-  realestate: { label: 'Real estate',            object: 'Listing',  objectPlural: 'Listings',  newCta: 'New listing' },
+  ecom:       { label: 'Brands',                 object: 'Collection', objectPlural: 'Collections', newCta: 'New collection' },
   creator:    { label: 'Creator',                object: 'Project',  objectPlural: 'Projects',  newCta: 'New project' },
 }
 
@@ -33,7 +32,7 @@ export const VERTICAL_ORDER: Vertical[] = ['photo', 'agency', 'ecom', 'creator']
 
 export type TaskId =
   | 'cull' | 'grade' | 'enhance' | 'remove-bg'
-  | 'retouch' | 'generate' | 'staging' | 'transcribe'
+  | 'retouch' | 'generate' | 'transcribe'
 
 export interface TaskDef {
   id: TaskId
@@ -51,12 +50,11 @@ export const TASKS: Record<TaskId, TaskDef> = {
   'remove-bg': { id: 'remove-bg',   label: 'Remove background',     unit: 'image', flatRateInr: 4,    actionId: 'remove-bg',     blurb: 'Clean cut-outs for the whole set' },
   retouch:     { id: 'retouch',     label: 'Retouch',               unit: 'photo', flatRateInr: 30,   actionId: 'retouch',       blurb: 'Skin, blemishes & cleanup at volume' },
   generate:    { id: 'generate',    label: 'Generate',              unit: 'image', flatRateInr: 10,   actionId: 'text-to-image', blurb: 'New on-brand visuals from a prompt' },
-  staging:     { id: 'staging',     label: 'Virtual staging',       unit: 'room',  flatRateInr: 249,  actionId: 'staging',       blurb: 'Furnish empty rooms, photoreal' },
   transcribe:  { id: 'transcribe',  label: 'Subtitle / transcribe', unit: 'clip',  flatRateInr: 6,    actionId: 'transcribe',    blurb: 'Captions & transcripts, 90+ languages' },
 }
 
 export const TASK_ORDER: TaskId[] = [
-  'cull', 'grade', 'enhance', 'remove-bg', 'retouch', 'generate', 'staging', 'transcribe',
+  'cull', 'grade', 'enhance', 'remove-bg', 'retouch', 'generate', 'transcribe',
 ]
 
 // ── Speed = the SLA the customer builds ───────────────────────────────────────
@@ -95,18 +93,38 @@ export interface Preset {
 }
 
 export const PRESETS: Preset[] = [
+  // Photographer / Studio
   { id: 'wedding-full', vertical: 'photo', label: 'Full wedding', blurb: 'Cull, grade in your style, enhance & retouch the heroes',
     tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.35 }, { taskId: 'enhance', defaultShare: 0.05 }, { taskId: 'retouch', defaultShare: 0.05 } ] },
+  { id: 'portraits', vertical: 'photo', label: 'Portrait session', blurb: 'Cull, grade & retouch every keeper',
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.4 }, { taskId: 'retouch', defaultShare: 0.4 } ] },
+  { id: 'event-highlights', vertical: 'photo', label: 'Event highlights', blurb: 'Cull the take, grade the keepers',
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.3 } ] },
   { id: 'sneak-peek', vertical: 'photo', label: 'Sneak peek', blurb: 'A fast, graded teaser set',
     tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.05 } ] },
-  { id: 'catalog', vertical: 'ecom', label: 'Catalog', blurb: 'Cut out & standardise the whole catalog',
+  // Brands (id: ecom)
+  { id: 'catalog', vertical: 'ecom', label: 'Product catalog', blurb: 'Cut out & standardise the whole catalog',
     tasks: [ { taskId: 'remove-bg', defaultShare: 1 }, { taskId: 'enhance', defaultShare: 1 } ] },
-  { id: 'listing', vertical: 'realestate', label: 'Listing', blurb: 'Enhance, then virtually stage the empty rooms',
-    tasks: [ { taskId: 'enhance', defaultShare: 1 }, { taskId: 'staging', defaultShare: 0.4 } ] },
+  { id: 'ghost-mannequin', vertical: 'ecom', label: 'Ghost mannequin', blurb: 'Invisible-mannequin apparel, cut out & cleaned up',
+    tasks: [ { taskId: 'remove-bg', defaultShare: 1 }, { taskId: 'retouch', defaultShare: 1 } ] },
+  { id: 'lifestyle', vertical: 'ecom', label: 'Lifestyle set', blurb: 'Drop products into on-brand scenes & polish',
+    tasks: [ { taskId: 'generate', defaultShare: 1 }, { taskId: 'retouch', defaultShare: 0.5 } ] },
+  { id: 'brand-social', vertical: 'ecom', label: 'Social drop', blurb: 'On-brand social visuals, generated & graded',
+    tasks: [ { taskId: 'generate', defaultShare: 1 }, { taskId: 'grade', defaultShare: 1 } ] },
+  // Agency
   { id: 'campaign', vertical: 'agency', label: 'Campaign', blurb: 'Generate on-brand variants & retouch',
     tasks: [ { taskId: 'generate', defaultShare: 1 }, { taskId: 'retouch', defaultShare: 1 } ] },
+  { id: 'brand-refresh', vertical: 'agency', label: 'Brand refresh', blurb: 'One consistent look across an existing set',
+    tasks: [ { taskId: 'grade', defaultShare: 1 }, { taskId: 'retouch', defaultShare: 0.3 } ] },
+  { id: 'ad-variants', vertical: 'agency', label: 'Ad variants', blurb: 'Many on-brand variations from one concept',
+    tasks: [ { taskId: 'generate', defaultShare: 1 } ] },
+  // Creator
   { id: 'social', vertical: 'creator', label: 'Social pack', blurb: 'Grade, generate & subtitle for every channel',
     tasks: [ { taskId: 'grade', defaultShare: 1 }, { taskId: 'generate', defaultShare: 0.3 }, { taskId: 'transcribe', defaultShare: 0.2 } ] },
+  { id: 'reels', vertical: 'creator', label: 'Reel pack', blurb: 'Grade your reels & burn in styled subtitles',
+    tasks: [ { taskId: 'grade', defaultShare: 1 }, { taskId: 'transcribe', defaultShare: 1 } ] },
+  { id: 'thumbnails', vertical: 'creator', label: 'Thumbnail batch', blurb: 'Click-worthy thumbnails from a prompt',
+    tasks: [ { taskId: 'generate', defaultShare: 1 } ] },
 ]
 
 export function presetsFor(vertical: Vertical): Preset[] {
@@ -153,21 +171,15 @@ export const MODELS: StudioModel[] = [
   { id: 'hero-upscale',       name: 'Hero Upscale',        vertical: 'agency', taskId: 'enhance',  base: 'Real-ESRGAN',        blurb: 'Billboard-grade upscaling for hero assets' },
   { id: 'your-style-agency',  name: 'Your Brand Look',     vertical: 'agency', taskId: 'grade',    base: 'Your data',          blurb: 'Train once on your brand, apply everywhere' },
 
-  // ── E-commerce ─────────────────────────────────────────────────────────────
+  // ── Brands (id: ecom) ────────────────────────────────────────────────────────
   { id: 'clean-white',        name: 'Clean White',         vertical: 'ecom',   taskId: 'remove-bg', base: 'U²-Net',          blurb: 'Pure-white marketplace backgrounds' },
   { id: 'transparent-cutout', name: 'Transparent Cut-out', vertical: 'ecom',   taskId: 'remove-bg', base: 'U²-Net',          blurb: 'Hair-level transparent PNGs' },
   { id: 'ghost-mannequin',    name: 'Ghost Mannequin',     vertical: 'ecom',   taskId: 'remove-bg', base: 'U²-Net + matting', blurb: 'Invisible-mannequin apparel shots' },
   { id: 'catalog-standard',   name: 'Catalog Standardize', vertical: 'ecom',   taskId: 'enhance',   base: 'UCIN Pipeline',     blurb: 'Uniform size, light & crop across the catalog' },
   { id: 'shadow-reflect',     name: 'Shadow & Reflection', vertical: 'ecom',   taskId: 'generate',  base: 'SDXL',              blurb: 'Natural shadows for floating products' },
-  { id: 'your-style-ecom',    name: 'Your Catalog Look',   vertical: 'ecom',   taskId: 'enhance',   base: 'Your data',         blurb: 'Match your store’s exact look, every time' },
-
-  // ── Real estate ────────────────────────────────────────────────────────────
-  { id: 'bright-airy',        name: 'Bright & Airy',       vertical: 'realestate', taskId: 'enhance', base: 'UCIN Pipeline',    blurb: 'Bright, true-to-life interiors' },
-  { id: 'hdr-blend',          name: 'HDR Window Blend',    vertical: 'realestate', taskId: 'enhance', base: 'Exposure-fusion',  blurb: 'Balanced windows & interiors in one frame' },
-  { id: 'twilight-sky',       name: 'Twilight Sky',        vertical: 'realestate', taskId: 'enhance', base: 'SDXL inpaint',     blurb: 'Dramatic dusk sky replacement' },
-  { id: 'staged-modern',      name: 'Virtual Staging — Modern', vertical: 'realestate', taskId: 'staging', base: 'SDXL + depth',  blurb: 'Photoreal contemporary furniture' },
-  { id: 'staged-scandi',      name: 'Virtual Staging — Scandi', vertical: 'realestate', taskId: 'staging', base: 'SDXL + depth',  blurb: 'Light, minimal staging' },
-  { id: 'declutter',          name: 'Declutter / Removal', vertical: 'realestate', taskId: 'retouch', base: 'LaMa inpaint',     blurb: 'Remove clutter & personal items' },
+  { id: 'lifestyle-scene',    name: 'Lifestyle Scene',     vertical: 'ecom',   taskId: 'generate',  base: 'SDXL + ControlNet', blurb: 'Place products in on-brand lifestyle scenes' },
+  { id: 'on-model',           name: 'On-Model Try-On',     vertical: 'ecom',   taskId: 'generate',  base: 'SDXL + ControlNet', blurb: 'Show apparel on a photoreal model' },
+  { id: 'your-style-ecom',    name: 'Your Brand Look',     vertical: 'ecom',   taskId: 'enhance',   base: 'Your data',         blurb: 'Match your brand’s exact look, every time' },
 
   // ── Creator ────────────────────────────────────────────────────────────────
   { id: 'social-pop',         name: 'Social Pop',          vertical: 'creator', taskId: 'grade',     base: 'Style LoRA',        blurb: 'Punchy, scroll-stopping colour' },

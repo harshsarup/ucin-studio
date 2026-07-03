@@ -9,8 +9,7 @@ import { VERTICALS, VERTICAL_ORDER } from '@/lib/catalog'
 const TAGLINE: Record<Vertical, string> = {
   photo:      'Weddings, portraits & events — culled, graded & finished in your style.',
   agency:     'On-brand campaign visuals, generated & retouched at volume.',
-  ecom:       'Whole catalogs cut out, standardised & shot-ready.',
-  realestate: 'Listings enhanced, decluttered & virtually staged.',
+  ecom:       'Catalogs cut out & standardised, plus lifestyle scenes & social — at volume.',
   creator:    'Grade, generate & subtitle for every channel.',
 }
 
