@@ -19,5 +19,19 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: { port: 5174, proxy },
-  build: { outDir: 'dist', sourcemap: false },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split heavy vendors so they cache independently and load in parallel
+        // with the page chunk, instead of one monolithic bundle blocking paint.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('framer-motion')) return 'motion'
+          if (id.includes('react') || id.includes('scheduler')) return 'react'
+        },
+      },
+    },
+  },
 })

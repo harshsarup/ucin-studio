@@ -61,6 +61,11 @@
 
   /* Native smooth-scroll: anchor jumps clear the fixed navbar */
   section[id] { scroll-margin-top: 5rem; }
+
+  /* Skip layout/paint of off-screen landing sections until they're approached —
+     cuts the synchronous first-paint cost. `auto` remembers real heights so the
+     scrollbar stays stable. The hero (in viewport) always paints immediately. */
+  main > section { content-visibility: auto; contain-intrinsic-size: auto 700px; }
 }
 
 @layer components {
