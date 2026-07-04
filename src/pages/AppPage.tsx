@@ -207,9 +207,9 @@ export function AppPage() {
     <div className="min-h-screen">
       {/* App bar */}
       <header className="border-b border-canvas-border">
-        <div className="max-w-6xl mx-auto flex h-16 items-center justify-between px-6">
+        <div className="max-w-6xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <a href="/" aria-label="UCIN Studio"><Logo /></a>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <div className="relative">
               <button
                 onClick={() => setSettingsOpen((o) => !o)}
@@ -235,19 +235,19 @@ export function AppPage() {
             </div>
             {authed ? (
               <>
-                <a href="/team" className="text-[13px] text-fg-subtle hover:text-fg">Team</a>
+                <a href="/team" className="whitespace-nowrap text-[13px] text-fg-subtle hover:text-fg">Team</a>
                 <button
                   onClick={() => { clearToken(); location.reload() }}
-                  className="text-[13px] text-fg-subtle hover:text-fg"
+                  className="whitespace-nowrap text-[13px] text-fg-subtle hover:text-fg"
                 >
                   Sign out
                 </button>
               </>
             ) : (
-              <a href="/login" className="text-[13px] font-medium text-accent">Sign in</a>
+              <a href="/login" className="whitespace-nowrap text-[13px] font-medium text-accent">Sign in</a>
             )}
-            <a href="/" className="flex items-center gap-1.5 text-[14px] font-medium text-fg-subtle hover:text-fg">
-              <ArrowLeft size={15} /> Back to site
+            <a href="/" aria-label="Back to site" className="flex items-center gap-1.5 whitespace-nowrap text-[14px] font-medium text-fg-subtle hover:text-fg">
+              <ArrowLeft size={15} /> <span className="hidden sm:inline">Back to site</span>
             </a>
           </div>
         </div>
