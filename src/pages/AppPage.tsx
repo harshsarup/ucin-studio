@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ArrowLeft, Clock, ShieldCheck, ArrowRight, Wand2, Sparkles, ChevronDown, Settings, Download } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { WalletUsage } from '@/components/WalletUsage'
 import { Onboarding } from '@/components/Onboarding'
 import { fmtINR } from '@/api/config'
 import { getToken, clearToken, setToken } from '@/api/auth'
@@ -258,6 +259,7 @@ export function AppPage() {
             </div>
             {authed ? (
               <>
+                <WalletUsage />
                 <a href="/team" className="whitespace-nowrap text-[13px] text-fg-subtle hover:text-fg">Team</a>
                 <button
                   onClick={() => { clearToken(); location.reload() }}
