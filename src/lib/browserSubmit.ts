@@ -11,7 +11,7 @@
  */
 import { generateJobKey, encryptFile, wrapKeyForEnclave, exportKeyB64, importKeyB64 } from './webcrypto'
 import {
-  batchIdFor, fileSig, loadCheckpoint, saveCheckpoint, clearCheckpoint,
+  batchIdFor, fileSig, loadCheckpoint, saveCheckpoint, clearCheckpoint, sweepCheckpoints,
   type BlobRecord,
 } from './uploadCheckpoint'
 import {
@@ -62,7 +62,13 @@ export interface SubmitConfig {
   actionId: string      // backend action_id (from the catalog TaskDef.actionId)
   tier: Tier
   itemCount: number
-  privacy?: boolean     // → single-tenant security mode
+  /** Style/model id ('' = auto per step) — mirrors the desktop's UCIN_MODEL. */
+  modelId?: string
+  // SLA add-ons. They are PRICED into the client quote, so every one the user
+  // toggles MUST reach the backend (which bills them) or quote != bill.
+  privacy?: boolean     // isolated processing (+ one-time setup fee, single batch)
+  guarantee?: boolean   // deadline guarantee
+  whitelabel?: boolean  // white-label delivery
 }
 
 export interface SubmitResult {
@@ -90,6 +96,7 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
 
   // 1. Resume-aware setup: reuse the checkpoint's key (so earlier ciphertext is
   //    still decryptable) or mint a new one and persist it for the batch.
+  sweepCheckpoints() // expire abandoned batches (and their keys) first
   const batchId = batchIdFor(cfg.files)
   const cp = loadCheckpoint(batchId)
   let jobKey
@@ -137,15 +144,27 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
   }
   if (!audit.audit_token) throw new Error('Audit passed but no token was issued; cannot deploy.')
 
-  // 4. Deploy — hand the encrypted-input manifest to the runner.
+  // 4. Deploy — hand the encrypted-input manifest to the runner, plus the full
+  //    contract the quote was priced on: style model, item limit, and EVERY SLA
+  //    add-on (they're in the client quote, so the backend must see them to
+  //    bill/honor them). A browser job is always a single, first batch, so the
+  //    one-time private setup fee rides along when privacy is on.
   emit('deploying', 0, 1)
   const manifest = envelopes.map((e) => e.rec.blobUri)
+  const limit = Math.min(cfg.itemCount || cfg.files.length, cfg.files.length)
   const deploy = await deployJob({
     ...baseReq,
     audit_token: audit.audit_token,
     env_vars: {
       UCIN_INPUT_MANIFEST: JSON.stringify(manifest),
-      ...(cfg.privacy ? { UCIN_PRIVATE: 'true' } : {}),
+      UCIN_MODEL: cfg.modelId ?? '',
+      UCIN_LIMIT: String(limit),
+      // 'hero' = top-N by quality when the step covers only part of the upload.
+      UCIN_SELECT: limit < cfg.files.length ? 'hero' : 'all',
+      UCIN_PRIVATE: String(!!cfg.privacy),
+      UCIN_PRIVATE_SETUP: String(!!cfg.privacy),
+      UCIN_GUARANTEE: String(!!cfg.guarantee),
+      UCIN_WHITELABEL: String(!!cfg.whitelabel),
     },
   })
   // Job is now server-side — the upload can no longer be lost, so drop the checkpoint.
@@ -171,16 +190,28 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
     /* placeholder enclave — deferred, non-fatal */
   }
 
-  // 6. Poll to terminal, then pull the result manifest.
+  // 6. Poll to terminal, then pull the result manifest. Consecutive failures are
+  //    bounded: past the cutoff (expired session, network gone) we stop polling
+  //    and hand back the job id — the job continues server-side either way, and
+  //    the UI must NOT offer a re-submit (that would deploy, and bill, again).
   emit('running', 0, 1, deploy.job_id)
   let status = deploy.status
+  let pollFailures = 0
+  const MAX_POLL_FAILURES = 24 // ≈2 min of solid failures at POLL_MS
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_MS))
     try {
       const job = await getJob(deploy.job_id)
+      pollFailures = 0
       status = job.status
       emit('running', 0, 1, job.message ?? status)
-    } catch { /* transient — keep polling */ }
+    } catch {
+      pollFailures++
+      if (pollFailures >= MAX_POLL_FAILURES) {
+        emit('done', total, total, 'lost contact — the job continues on the network')
+        return { jobId: deploy.job_id, status: 'running', artifacts: [] }
+      }
+    }
     if (TERMINAL.has(status.toLowerCase())) break
   }
 

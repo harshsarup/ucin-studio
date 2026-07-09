@@ -20,9 +20,32 @@ export interface BlobRecord {
 export interface Checkpoint {
   keyB64?: string
   blobs: Record<string, BlobRecord> // keyed by fileSig
+  /** Last touch (ms epoch) — abandoned checkpoints expire so a batch's AES key
+   *  never lingers in localStorage past its useful life. */
+  touchedAt?: number
 }
 
 const NS = 'ucin.upload.'
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+/** Drop abandoned checkpoints (their presigned uploads are long expired anyway). */
+export function sweepCheckpoints(): void {
+  try {
+    const now = Date.now()
+    const stale: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (!k?.startsWith(NS)) continue
+      try {
+        const cp = JSON.parse(localStorage.getItem(k) ?? '') as Checkpoint
+        if (!cp.touchedAt || now - cp.touchedAt > MAX_AGE_MS) stale.push(k)
+      } catch {
+        stale.push(k) // unparseable — drop it
+      }
+    }
+    for (const k of stale) localStorage.removeItem(k)
+  } catch { /* storage unavailable — nothing to sweep */ }
+}
 
 export const fileSig = (f: File): string => `${f.name}:${f.size}:${f.lastModified}`
 
@@ -43,7 +66,7 @@ export function loadCheckpoint(id: string): Checkpoint {
 }
 
 export function saveCheckpoint(id: string, cp: Checkpoint): void {
-  try { localStorage.setItem(NS + id, JSON.stringify(cp)) } catch { /* quota — non-fatal */ }
+  try { localStorage.setItem(NS + id, JSON.stringify({ ...cp, touchedAt: Date.now() })) } catch { /* quota — non-fatal */ }
 }
 
 export function clearCheckpoint(id: string): void {

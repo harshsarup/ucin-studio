@@ -81,11 +81,13 @@ export interface WrappedKeyItem {
 }
 
 export interface ResultArtifact {
-  kind: 'xmp_sidecar' | 'safetensors' | 'metadata'
+  kind: 'image' | 'captions' | 'xmp_sidecar' | 'safetensors' | 'metadata'
   filename: string
   download_url: string
   source_path: string | null
   bytes: number
+  /** For generate outputs: which prompt slot this variant belongs to. */
+  slot?: number | null
 }
 export interface JobResultManifest { job_id: string; artifacts: ResultArtifact[] }
 

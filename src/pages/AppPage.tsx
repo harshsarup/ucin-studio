@@ -15,10 +15,19 @@ import {
 } from '@/lib/catalog'
 import { checkBatch, fmtBytes, deliveryInr, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
+import { BrandStamp } from '@/components/BrandStamp'
 import type { ResultArtifact } from '@/api/pipeline'
 
 const inputCls =
   'w-full rounded-lg border border-canvas-border bg-canvas-surface px-3 py-2 text-[15px] text-fg outline-none focus:border-accent'
+
+/** The assistant speaks backend action_ids ('upscale', 'text-to-image'); the
+ *  builder's counts are keyed by catalog TaskIds ('enhance', 'generate'). */
+const TASK_BY_ACTION: Record<string, TaskId> = Object.fromEntries(
+  Object.values(TASKS).map((t) => [t.actionId, t.id]),
+) as Record<string, TaskId>
+const toTaskId = (actionId: string): TaskId | undefined =>
+  TASK_BY_ACTION[actionId] ?? (actionId in TASKS ? (actionId as TaskId) : undefined)
 
 /** A selectable model/style row showing its name, what it does, and its SOTA base. */
 function StyleOption({ name, blurb, base, selected, onPick }: {
@@ -133,7 +142,17 @@ export function AppPage() {
     setSubmitErr(''); setResult(null)
     try {
       const res = await submitBrowserJob(
-        { files, actionId, tier: speedId, itemCount: singleTask.count || files.length, privacy: toggles.privacy },
+        {
+          files,
+          actionId,
+          tier: speedId,
+          itemCount: singleTask.count || files.length,
+          modelId,
+          // Every add-on priced into the quote must reach the backend.
+          privacy: toggles.privacy,
+          guarantee: toggles.guarantee,
+          whitelabel: toggles.whitelabel,
+        },
         setPhase,
       )
       setResult(res)
@@ -165,7 +184,11 @@ export function AppPage() {
     if (!totalItems && fallback) setTotalItems(fallback)
     setCounts((c) => ({
       ...c,
-      ...Object.fromEntries(aiPlan.lines.map((l) => [l.action_id, l.count ?? fallback])),
+      ...Object.fromEntries(
+        aiPlan.lines
+          .map((l) => [toTaskId(l.action_id), l.count ?? fallback] as const)
+          .filter(([id]) => id != null),
+      ),
     }))
     if (aiPlan.speed && SPEED_TIERS.some((s) => s.id === aiPlan.speed)) setSpeedId(aiPlan.speed as Tier)
   }
@@ -337,7 +360,7 @@ export function AppPage() {
                   <ul className="mt-2 space-y-1">
                     {aiPlan.lines.map((l, i) => (
                       <li key={i} className="text-[13px] text-fg-subtle">
-                        • <span className="text-fg">{TASKS[l.action_id as TaskId]?.label ?? l.action_id}</span>
+                        • <span className="text-fg">{(() => { const id = toTaskId(l.action_id); return id ? TASKS[id].label : l.action_id })()}</span>
                         {l.count != null && ` — ${l.count.toLocaleString()}`}
                         {l.note && <span className="text-fg-faint"> · {l.note}</span>}
                       </li>
@@ -609,12 +632,16 @@ export function AppPage() {
                     <div className="text-[13px] font-semibold text-fg">
                       {multiStep
                         ? 'Multi-step builds run in the desktop app.'
-                        : 'For your file size we recommend the UCIN Studio desktop app.'}
+                        : batch.reason === 'file-size'
+                          ? 'One of your files is too large for the browser.'
+                          : 'For your file size we recommend the UCIN Studio desktop app.'}
                     </div>
                     <div className="mt-1 text-[12.5px] text-fg-subtle">
                       {multiStep
                         ? 'This build has more than one step — the desktop app runs the whole pipeline locally.'
-                        : 'Larger batches process cheaper on the desktop — only tiny proxies ever leave your machine.'}
+                        : batch.reason === 'file-size'
+                          ? 'Files over 1 GB each are handled by the desktop app — only tiny proxies ever leave your machine.'
+                          : 'Larger batches process cheaper on the desktop — only tiny proxies ever leave your machine.'}
                     </div>
                     <code className="mt-2 block rounded bg-canvas-sunk px-2 py-1.5 mono text-[12px] text-fg">{DESKTOP_INSTALL_CMD}</code>
                     <a
@@ -641,20 +668,24 @@ export function AppPage() {
                 )}
 
                 {result && (
-                  <div className="rounded-lg border border-canvas-border px-3 py-3">
-                    <div className="text-[13px] font-semibold text-fg">Job {result.status} · {result.jobId.slice(0, 8)}</div>
-                    {result.artifacts.length > 0 ? (
-                      <ul className="mt-2 space-y-1">
-                        {result.artifacts.map((a) => (
-                          <li key={a.filename}>
-                            <a href={a.download_url} className="link-arrow text-[13px]" download>{a.filename} <Download size={13} /></a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="mt-1 text-[12.5px] text-fg-subtle">Results will appear here when they&apos;re ready.</div>
-                    )}
-                  </div>
+                  <>
+                    <div className="rounded-lg border border-canvas-border px-3 py-3">
+                      <div className="text-[13px] font-semibold text-fg">Job {result.status} · {result.jobId.slice(0, 8)}</div>
+                      {result.artifacts.length > 0 ? (
+                        <ul className="mt-2 space-y-1">
+                          {result.artifacts.map((a) => (
+                            <li key={a.filename}>
+                              <a href={a.download_url} className="link-arrow text-[13px]" download>{a.filename} <Download size={13} /></a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="mt-1 text-[12.5px] text-fg-subtle">Results will appear here when they&apos;re ready.</div>
+                      )}
+                    </div>
+                    {/* Deliver under the studio's own mark — stamped in-browser. */}
+                    {result.artifacts.length > 0 && <BrandStamp artifacts={result.artifacts} />}
+                  </>
                 )}
 
                 {submitErr && (

@@ -8,6 +8,10 @@
  */
 export const BROWSER_MAX_FILES = 800
 export const BROWSER_MAX_BYTES = 5 * 1024 * 1024 * 1024 // 5 GB total
+/** Per-FILE ceiling. Browser encryption is whole-file in memory (WebCrypto has
+ *  no streaming AES-GCM), so one multi-GB file would OOM the tab even when the
+ *  batch total is fine — huge single files belong on the desktop's proxy path. */
+export const BROWSER_MAX_FILE_BYTES = 1024 * 1024 * 1024 // 1 GB each
 
 /** Pass-through delivery rate (₹/GB of upload). Covers S3 Mumbai egress + result
  *  inflation + a sliver of margin. Confirm against the live egress rate. */
@@ -19,7 +23,7 @@ export interface BatchCheck {
   ok: boolean
   totalBytes: number
   count: number
-  reason: 'files' | 'bytes' | null
+  reason: 'files' | 'bytes' | 'file-size' | null
 }
 
 export function checkBatch(files: File[]): BatchCheck {
@@ -27,6 +31,7 @@ export function checkBatch(files: File[]): BatchCheck {
   const count = files.length
   if (count > BROWSER_MAX_FILES) return { ok: false, totalBytes, count, reason: 'files' }
   if (totalBytes > BROWSER_MAX_BYTES) return { ok: false, totalBytes, count, reason: 'bytes' }
+  if (files.some((f) => f.size > BROWSER_MAX_FILE_BYTES)) return { ok: false, totalBytes, count, reason: 'file-size' }
   return { ok: true, totalBytes, count, reason: null }
 }
 
