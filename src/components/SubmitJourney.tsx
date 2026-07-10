@@ -15,6 +15,7 @@ const STEPS: { id: SubmitProgress['phase']; label: string }[] = [
   { id: 'estimating', label: 'Quote' },
   { id: 'auditing', label: 'Audit' },
   { id: 'deploying', label: 'Deploy' },
+  { id: 'paying', label: 'Pay' },
   { id: 'sealing', label: 'Seal' },
   { id: 'running', label: 'Process' },
 ]

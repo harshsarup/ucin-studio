@@ -128,6 +128,43 @@ export async function getJob(jobId: string): Promise<JobStatus> {
   return data
 }
 
+// ── Studio per-event checkout (one-off Cashfree order → run) ─────────────────
+interface StudioOrder { order_id: string; payment_session_id: string; env: 'sandbox' | 'production'; amount_inr: number }
+
+function loadCashfreeSdk(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const w = window as unknown as { Cashfree?: unknown }
+    if (w.Cashfree) return resolve()
+    const s = document.createElement('script')
+    s.src = 'https://sdk.cashfree.com/js/v3/cashfree.js'
+    s.onload = () => resolve()
+    s.onerror = () => reject(new Error('Could not load the Cashfree checkout SDK'))
+    document.head.appendChild(s)
+  })
+}
+
+/** Pay for a Studio job that deployed in `pending_payment`: create a one-off Cashfree
+ *  order, run the in-page (`_modal`) checkout, then wait for the webhook to release the
+ *  job (pending_payment → queued). Throws if the user cancels or payment fails. */
+export async function payStudioJob(jobId: string): Promise<void> {
+  const { data } = await api.post<StudioOrder>(`${C}/studio/order`, { job_id: jobId })
+  await loadCashfreeSdk()
+  const Cashfree = (window as unknown as { Cashfree: (o: { mode: string }) => { checkout: (o: Record<string, unknown>) => Promise<{ error?: { message?: string } }> } }).Cashfree
+  const result = await Cashfree({ mode: data.env }).checkout({
+    paymentSessionId: data.payment_session_id,
+    redirectTarget: '_modal',
+  })
+  if (result?.error) throw new Error(result.error.message || 'Payment was not completed')
+  // The webhook releases the job (source of truth); wait (bounded) for it to leave pending_payment.
+  const deadline = Date.now() + 90_000
+  for (;;) {
+    const job = await getJob(jobId)
+    if (job.status !== 'pending_payment') return
+    if (Date.now() > deadline) throw new Error('Payment received — the job will start shortly.')
+    await new Promise((r) => setTimeout(r, 3000))
+  }
+}
+
 export async function enclaveKey(jobId: string): Promise<EnclaveKeyGrant> {
   const { data } = await api.get<EnclaveKeyGrant>(`${C}/jobs/${jobId}/enclave-key`)
   return data

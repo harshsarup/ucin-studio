@@ -16,7 +16,7 @@ import {
 } from './uploadCheckpoint'
 import {
   presignUpload, putToStorage, estimateJob, scanJob, auditJob, deployJob,
-  enclaveKey, submitWrappedKeys, getJob, jobResults,
+  enclaveKey, submitWrappedKeys, getJob, jobResults, payStudioJob,
   type Tier, type WrappedKeyItem, type ResultArtifact,
 } from '@/api/pipeline'
 
@@ -48,7 +48,7 @@ export const BROWSER_ACTIONS = new Set(['cull', 'grade', 'upscale', 'enhance', '
 
 export type SubmitPhase =
   | 'encrypting' | 'uploading' | 'estimating' | 'auditing'
-  | 'deploying' | 'sealing' | 'running' | 'done' | 'error'
+  | 'deploying' | 'paying' | 'sealing' | 'running' | 'done' | 'error'
 
 export interface SubmitProgress {
   phase: SubmitPhase
@@ -169,6 +169,14 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
   })
   // Job is now server-side — the upload can no longer be lost, so drop the checkpoint.
   clearCheckpoint(batchId)
+
+  // 4.5 Per-event billing: a Studio job deploys in `pending_payment`; collect the
+  //     one-off charge now via the in-page Cashfree modal. On success the webhook
+  //     releases it to run. Cancelling leaves it unpaid/unrun (no wallet involved).
+  if (deploy.status === 'pending_payment') {
+    emit('paying', 0, 1)
+    await payStudioJob(deploy.job_id)
+  }
 
   // 5. Seal: wrap the job key for the enclave + submit per-blob envelopes.
   //    Best-effort — enclave infra is a placeholder today, so a seal failure
