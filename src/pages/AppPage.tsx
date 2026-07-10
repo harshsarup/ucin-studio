@@ -16,6 +16,7 @@ import {
 } from '@/lib/catalog'
 import { checkBatch, fmtBytes, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
+import { SubmitJourney } from '@/components/SubmitJourney'
 import { BrandStamp } from '@/components/BrandStamp'
 import type { ResultArtifact } from '@/api/pipeline'
 
@@ -651,17 +652,7 @@ export function AppPage() {
                   </div>
                 )}
 
-                {phase && phase.phase !== 'error' && !result && (
-                  <div className="rounded-lg border border-canvas-border px-3 py-2.5">
-                    <div className="flex items-center justify-between text-[13px]">
-                      <span className="text-fg">{phaseLabel(phase.phase)}{phase.message ? ` · ${phase.message}` : ''}</span>
-                      {phase.total > 1 && <span className="mono text-fg-faint">{phase.done}/{phase.total}</span>}
-                    </div>
-                    <div className="mt-2 h-1.5 w-full rounded-full bg-canvas-sunk">
-                      <div className="h-full rounded-full" style={{ width: `${phase.total ? Math.round((phase.done / phase.total) * 100) : 30}%`, background: 'var(--accent)' }} />
-                    </div>
-                  </div>
-                )}
+                {phase && !result && <SubmitJourney progress={phase} />}
 
                 {result && (
                   <>
@@ -710,15 +701,6 @@ export function AppPage() {
       </main>
     </div>
   )
-}
-
-function phaseLabel(p: SubmitProgress['phase']): string {
-  const map: Record<SubmitProgress['phase'], string> = {
-    encrypting: 'Encrypting locally', uploading: 'Uploading', estimating: 'Quoting',
-    auditing: 'Security check', deploying: 'Deploying', sealing: 'Sealing keys',
-    running: 'Processing', done: 'Done', error: 'Error',
-  }
-  return map[p] ?? p
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
