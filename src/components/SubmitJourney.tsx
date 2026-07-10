@@ -23,7 +23,7 @@ const STEPS: { id: SubmitProgress['phase']; label: string }[] = [
 const LABELS: Record<SubmitProgress['phase'], string> = {
   encrypting: 'Encrypting on your device', uploading: 'Uploading ciphertext',
   estimating: 'Pricing your job', auditing: 'Security check', deploying: 'Deploying to the network',
-  sealing: 'Sealing keys', running: 'Processing on the GPU', done: 'Delivered', error: 'Stopped',
+  paying: 'Payment', sealing: 'Sealing keys', running: 'Processing on the GPU', done: 'Delivered', error: 'Stopped',
 }
 
 export function SubmitJourney({ progress }: { progress: SubmitProgress }) {
