@@ -1,10 +1,11 @@
 /**
- * Browser batch limits + delivery pricing.
+ * Browser batch limits.
  *
- * The cap is now a RELIABILITY boundary (resumable upload makes 5 GB viable),
- * and the per-GB delivery cost is passed through in the quote so browser volume
- * stays cost-neutral — the desktop app (proxy path, ~zero egress) remains the
- * home for anything larger.
+ * The cap is a RELIABILITY boundary (resumable upload makes 5 GB viable).
+ * Delivery egress (≤5 GB in-browser) is absorbed into the per-output task rates
+ * rather than billed as a separate line — so the quote stays a single fixed price
+ * equal to the bill. The desktop app (proxy path, ~zero egress) is the home for
+ * anything larger.
  */
 export const BROWSER_MAX_FILES = 800
 export const BROWSER_MAX_BYTES = 5 * 1024 * 1024 * 1024 // 5 GB total
@@ -12,10 +13,6 @@ export const BROWSER_MAX_BYTES = 5 * 1024 * 1024 * 1024 // 5 GB total
  *  no streaming AES-GCM), so one multi-GB file would OOM the tab even when the
  *  batch total is fine — huge single files belong on the desktop's proxy path. */
 export const BROWSER_MAX_FILE_BYTES = 1024 * 1024 * 1024 // 1 GB each
-
-/** Pass-through delivery rate (₹/GB of upload). Covers S3 Mumbai egress + result
- *  inflation + a sliver of margin. Confirm against the live egress rate. */
-export const DELIVERY_INR_PER_GB = 15
 
 export const DESKTOP_INSTALL_CMD = 'npx @ucin-studio/desktop@latest'
 
@@ -33,11 +30,6 @@ export function checkBatch(files: File[]): BatchCheck {
   if (totalBytes > BROWSER_MAX_BYTES) return { ok: false, totalBytes, count, reason: 'bytes' }
   if (files.some((f) => f.size > BROWSER_MAX_FILE_BYTES)) return { ok: false, totalBytes, count, reason: 'file-size' }
   return { ok: true, totalBytes, count, reason: null }
-}
-
-/** Delivery charge for a batch, in whole rupees (rounded up). */
-export function deliveryInr(totalBytes: number): number {
-  return Math.ceil((totalBytes / (1024 ** 3)) * DELIVERY_INR_PER_GB)
 }
 
 export function fmtBytes(n: number): string {

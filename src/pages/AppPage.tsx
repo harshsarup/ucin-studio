@@ -14,7 +14,7 @@ import {
   VERTICALS, TASKS, SPEED_TIERS, TOGGLES, NO_TOGGLES,
   presetsFor, defaultCounts, quoteEvent, modelsFor,
 } from '@/lib/catalog'
-import { checkBatch, fmtBytes, deliveryInr, DESKTOP_INSTALL_CMD } from '@/lib/batch'
+import { checkBatch, fmtBytes, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
 import { BrandStamp } from '@/components/BrandStamp'
 import type { ResultArtifact } from '@/api/pipeline'
@@ -135,8 +135,8 @@ export function AppPage() {
   const needsDesktop = files.length > 0 && (multiStep || !batch.ok || !browserAction)
   const canBrowserSubmit = authed && files.length > 0 && browserAction && batch.ok && !multiStep
   const submitting = !!phase && phase.phase !== 'error' && phase.phase !== 'done' && !result
-  const delivery = canBrowserSubmit ? deliveryInr(batch.totalBytes) : 0
-  const grandTotal = quote.totalInr + delivery
+  // Delivery egress (≤5 GB in-browser) is absorbed into the per-output task rates,
+  // so the shown total is exactly tasks + base — equal to what the backend bills.
 
   const runSubmit = async (): Promise<void> => {
     if (!actionId || !singleTask) return
@@ -582,12 +582,6 @@ export function AppPage() {
                       <span className="text-fg">{fmtINR(t.amountInr)}</span>
                     </div>
                   ))}
-                  {delivery > 0 && (
-                    <div className="flex items-center justify-between text-[14px]">
-                      <span className="text-fg-muted">Delivery · {fmtBytes(batch.totalBytes)}</span>
-                      <span className="text-fg">{fmtINR(delivery)}</span>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -699,7 +693,7 @@ export function AppPage() {
 
                 {canBrowserSubmit && !result && (
                   <button onClick={runSubmit} disabled={submitting} className={`btn-primary w-full ${submitting ? 'opacity-60' : ''}`}>
-                    {submitting ? 'Submitting…' : submitErr ? 'Resume upload' : `Start — ${fmtINR(grandTotal)}`}
+                    {submitting ? 'Submitting…' : submitErr ? 'Resume upload' : `Start — ${fmtINR(quote.totalInr)}`}
                     <ArrowRight size={15} />
                   </button>
                 )}

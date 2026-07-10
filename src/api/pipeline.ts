@@ -81,7 +81,7 @@ export interface WrappedKeyItem {
 }
 
 export interface ResultArtifact {
-  kind: 'image' | 'captions' | 'xmp_sidecar' | 'safetensors' | 'metadata'
+  kind: 'image' | 'captions' | 'xmp_sidecar' | 'safetensors' | 'metadata' | 'chunked'
   filename: string
   download_url: string
   source_path: string | null
