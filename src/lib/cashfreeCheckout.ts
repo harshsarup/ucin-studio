@@ -49,23 +49,19 @@ function loadSdk(): Promise<void> {
 const rupee = (n: number) => '₹' + n.toFixed(2)
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 
-// ── Official brand logos: drop-in slot ───────────────────────────────────────
-// Paste the base64 data-URI of each logo from YOUR Cashfree merchant logo kit
-// (Dashboard → brand/payment-mode assets) as the value. The keys are the card
-// networks, the wallet `provider` codes, and the netbanking `netbankingBankName`
-// codes — so a filled value renders that official mark automatically everywhere.
-// Left empty, the checkout falls back to the clean marks / plain names below.
-// e.g. visa: 'data:image/svg+xml;base64,PHN2Zy4uLg=='
-const LOGOS: Record<string, string> = {
-  // card networks
-  visa: '', mastercard: '', rupay: '', amex: '',
-  // wallets (provider codes)
-  paytm: '', phonepe: '', amazon: '', mobikwik: '',
-  // netbanking (netbankingBankName codes)
-  HDFCR: '', ICICR: '', SBINR: '', UTIBR: '', KKBKR: '', YESBR: '',
-}
+// ── Official brand logos, straight from Cashfree's own icon CDN ───────────────
+// Cashfree hosts the licensed payment-mode icons at cashfreelogo.cashfree.com,
+// purpose-built for custom checkouts — so we point directly at them (no assets to
+// host). Card-network URLs are confirmed from Cashfree's docs; bank/wallet codes are
+// best-effort against the same CDN and fall back automatically (an onError handler
+// wired after injection swaps a card mark to its clean SVG and drops an unresolved
+// bank/wallet icon, leaving the plain name) — so a wrong code never shows broken art.
+const CF_ICONS = 'https://cashfreelogo.cashfree.com/assets_images/pg'
+const cardIcon = (k: string) => `${CF_ICONS}/card/svg/${k}.svg`
+const nbIcon = (k: string) => `${CF_ICONS}/nb/32/${k}.png`
+const walletIcon = (k: string) => `${CF_ICONS}/wallet/64/${k}.png`
 
-// Clean fallback marks for the card networks (used until LOGOS above is filled).
+// Clean fallback marks for the card networks (used if the CDN is ever blocked by CSP).
 const CARD_FALLBACK: Record<string, string> = {
   visa: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Visa"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="22" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-style="italic" font-size="12" letter-spacing=".4" fill="#1A1F71">VISA</text></svg>`,
   mastercard: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Mastercard"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><circle cx="18" cy="12" r="6.6" fill="#EB001B"/><circle cx="26" cy="12" r="6.6" fill="#F79E1B"/><path d="M22 6.9a6.6 6.6 0 0 0 0 10.2 6.6 6.6 0 0 0 0-10.2Z" fill="#FF5F00"/></svg>`,
@@ -73,26 +69,27 @@ const CARD_FALLBACK: Record<string, string> = {
   amex: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="American Express"><rect width="44" height="24" rx="4" fill="#016FD0"/><text x="22" y="15.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="8" letter-spacing=".3" fill="#fff">AMEX</text></svg>`,
 }
 
-/** Official <img> mark if the kit asset is present, else the clean fallback SVG (cards). */
+/** Card-network mark from the CDN; data-fallback lets the onError handler swap in the clean SVG. */
 function netMark(key: string, label: string): string {
-  return LOGOS[key] ? `<img class="netlogo" src="${LOGOS[key]}" alt="${esc(label)}">` : (CARD_FALLBACK[key] || '')
+  return `<img class="netlogo cf-icon" src="${cardIcon(key)}" alt="${esc(label)}" data-fallback="card:${key}">`
 }
-/** Small inline logo for a bank/wallet row when the kit asset is present, else nothing. */
-function rowLogo(key: string, cls: string): string {
-  return LOGOS[key] ? `<img class="${cls}" src="${LOGOS[key]}" alt="">` : ''
+/** Small inline bank/wallet logo from the CDN; drops itself (name remains) if it doesn't resolve. */
+function rowLogo(url: string, cls: string): string {
+  return `<img class="${cls} cf-icon" src="${url}" alt="" data-fallback="hide">`
 }
 const NET_LOGOS = netMark('visa', 'Visa') + netMark('mastercard', 'Mastercard') + netMark('rupay', 'RuPay') + netMark('amex', 'American Express')
 
 // Inputs are collected on OUR UI; cashfree.pay() then redirects only for the final
 // bank/OTP auth. These two maps drive the inline Net-Banking and Wallet selectors.
 // Netbanking codes are Cashfree's `netbankingBankName` values (docs → element appendix).
-const NB_BANKS: { name: string; code: string }[] = [
-  { name: 'HDFC Bank', code: 'HDFCR' },
-  { name: 'ICICI Bank', code: 'ICICR' },
-  { name: 'State Bank of India', code: 'SBINR' },
-  { name: 'Axis Bank', code: 'UTIBR' },
-  { name: 'Kotak Mahindra', code: 'KKBKR' },
-  { name: 'Yes Bank', code: 'YESBR' },
+// `code` = Cashfree netbankingBankName (for pay()); `icon` = CDN icon filename (for the logo).
+const NB_BANKS: { name: string; code: string; icon: string }[] = [
+  { name: 'HDFC Bank', code: 'HDFCR', icon: 'hdfc' },
+  { name: 'ICICI Bank', code: 'ICICR', icon: 'icici' },
+  { name: 'State Bank of India', code: 'SBINR', icon: 'sbi' },
+  { name: 'Axis Bank', code: 'UTIBR', icon: 'axis' },
+  { name: 'Kotak Mahindra', code: 'KKBKR', icon: 'kotak' },
+  { name: 'Yes Bank', code: 'YESBR', icon: 'yes' },
 ]
 // Cashfree wallet `provider` values (docs → element appendix): phonepe, paytm, ola,
 // amazon, airtel, freecharge, mobikwik, jio, payzapp. (Amazon Pay is "amazon".)
@@ -152,6 +149,19 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
     $('#ucinpay-bg')?.addEventListener('click', () => done('cancelled'))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { window.removeEventListener('keydown', onKey); done('cancelled') } }
     window.addEventListener('keydown', onKey)
+
+    // Payment-mode logos load from Cashfree's icon CDN. If one is blocked (page CSP) or a
+    // code doesn't resolve, degrade cleanly: card marks swap to their clean SVG; a
+    // bank/wallet icon just drops out, leaving the plain name.
+    $$('img.cf-icon').forEach((el) => el.addEventListener('error', () => {
+      const fb = el.getAttribute('data-fallback') || 'hide'
+      if (fb.startsWith('card:')) {
+        const svg = CARD_FALLBACK[fb.slice(5)]
+        const t = document.createElement('template'); t.innerHTML = svg || ''
+        const node = t.content.firstElementChild
+        if (node) el.replaceWith(node); else el.remove()
+      } else { el.remove() }
+    }))
 
     // method rail switching
     $$('.ritem').forEach((it) => it.addEventListener('click', () => {
@@ -349,7 +359,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
             <div class="pane" id="nb">
               <div class="chead"><h3>Net Banking</h3></div>
               <div class="fields"><div class="grid2">
-                ${NB_BANKS.map((b, i) => `<button class="opt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(b.code)}">${rowLogo(b.code, 'optlogo')}${esc(b.name)}</button>`).join('')}
+                ${NB_BANKS.map((b, i) => `<button class="opt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(b.code)}">${rowLogo(nbIcon(b.icon), 'optlogo')}${esc(b.name)}</button>`).join('')}
               </div></div>
               <button class="paybtn" type="button">Continue with Net Banking</button>
             </div>
@@ -358,7 +368,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
               <div class="chead"><h3>Wallets</h3></div>
               <div class="fields">
                 <div class="wlist">
-                  ${WALLETS.map((w, i) => `<button class="wopt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(w.code)}"><span>${rowLogo(w.code, 'wlogo')}${esc(w.name)}</span><span class="wdot"></span></button>`).join('')}
+                  ${WALLETS.map((w, i) => `<button class="wopt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(w.code)}"><span>${rowLogo(walletIcon(w.code), 'wlogo')}${esc(w.name)}</span><span class="wdot"></span></button>`).join('')}
                 </div>
                 <div class="field wphone-field"><label>Mobile number</label><div class="control"><input class="wphone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" aria-label="Mobile number"></div></div>
               </div>
@@ -472,6 +482,7 @@ function injectStyleOnce() {
   #ucinpay-root .optlogo{height:18px;width:auto;margin-right:9px;flex-shrink:0}
   #ucinpay-root .wopt > span{display:inline-flex;align-items:center}
   #ucinpay-root .wlogo{height:20px;width:auto;margin-right:10px;flex-shrink:0}
+  #ucinpay-root .cf-icon{object-fit:contain}
   #ucinpay-root .handoff{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:22px 8px}
   #ucinpay-root svg.hoicon{width:34px;height:34px;color:var(--accent);stroke-width:1.6}
   #ucinpay-root .hotitle{font-size:14px;font-weight:660}
