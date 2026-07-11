@@ -49,6 +49,15 @@ function loadSdk(): Promise<void> {
 const rupee = (n: number) => '₹' + n.toFixed(2)
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 
+// Accepted card-network marks (informational, as every checkout shows). Each SVG carries its
+// own white tile so it stays legible in the dark theme.
+const NET_LOGOS = [
+  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Visa"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="22" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-style="italic" font-size="12" letter-spacing=".4" fill="#1A1F71">VISA</text></svg>`,
+  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Mastercard"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><circle cx="18" cy="12" r="6.6" fill="#EB001B"/><circle cx="26" cy="12" r="6.6" fill="#F79E1B"/><path d="M22 6.9a6.6 6.6 0 0 0 0 10.2 6.6 6.6 0 0 0 0-10.2Z" fill="#FF5F00"/></svg>`,
+  `<svg class="netlogo" viewBox="0 0 50 24" role="img" aria-label="RuPay"><rect width="50" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="25" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="11"><tspan fill="#1D3E70">Ru</tspan><tspan fill="#E8792A">Pay</tspan></text></svg>`,
+  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="American Express"><rect width="44" height="24" rx="4" fill="#016FD0"/><text x="22" y="15.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="8" letter-spacing=".3" fill="#fff">AMEX</text></svg>`,
+].join('')
+
 /** Cashfree Elements input styling, matched to the checkout theme (reads the scoped CSS vars). */
 function elementStyle(root: HTMLElement) {
   const cs = getComputedStyle(root)
@@ -268,7 +277,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
             </div>
 
             <div class="pane" id="cards">
-              <div class="chead"><h3>Card details</h3><span class="nets"><span class="netchip">Visa</span><span class="netchip">Mastercard</span><span class="netchip">RuPay</span><span class="netchip">Amex</span></span></div>
+              <div class="chead"><h3>Card details</h3><span class="nets">${NET_LOGOS}</span></div>
               <div class="fields">
                 <div class="field"><label>Card number</label><div class="control" id="cc-number"></div></div>
                 <div class="row2">
@@ -282,23 +291,22 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
 
             <div class="pane" id="nb">
               <div class="chead"><h3>Net Banking</h3></div>
-              <div class="fields"><div class="grid2">
-                <button class="opt sel" type="button">HDFC Bank</button><button class="opt" type="button">ICICI Bank</button>
-                <button class="opt" type="button">State Bank of India</button><button class="opt" type="button">Axis Bank</button>
-                <button class="opt" type="button">Kotak Mahindra</button><button class="opt" type="button">Other banks ›</button>
-              </div></div>
-              <button class="paybtn" type="button">Pay ${amt}</button>
+              <div class="fields handoff">
+                <svg class="i hoicon" viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+                <div class="hotitle">All major banks supported</div>
+                <div class="hosub">HDFC, ICICI, SBI, Axis, Kotak &amp; 50+ more — continue to Cashfree's secure selector, where every bank appears with its official logo.</div>
+              </div>
+              <button class="paybtn" type="button">Continue with Net Banking</button>
             </div>
 
             <div class="pane" id="wallet">
               <div class="chead"><h3>Wallets</h3></div>
-              <div class="fields"><div class="wlist">
-                <button class="wopt sel" type="button"><span>Paytm</span><span class="wdot"></span></button>
-                <button class="wopt" type="button"><span>PhonePe</span><span class="wdot"></span></button>
-                <button class="wopt" type="button"><span>Amazon Pay</span><span class="wdot"></span></button>
-                <button class="wopt" type="button"><span>Mobikwik</span><span class="wdot"></span></button>
-              </div></div>
-              <button class="paybtn" type="button">Pay ${amt}</button>
+              <div class="fields handoff">
+                <svg class="i hoicon" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                <div class="hotitle">Paytm, PhonePe, Amazon Pay &amp; more</div>
+                <div class="hosub">Continue to Cashfree's secure wallet selector, where each wallet appears with its official logo.</div>
+              </div>
+              <button class="paybtn" type="button">Continue with Wallets</button>
             </div>
           </div>
         </div>
@@ -374,8 +382,8 @@ function injectStyleOnce() {
   #ucinpay-root .content{flex:1;min-width:0;padding:22px 22px 24px;display:flex;flex-direction:column}
   #ucinpay-root .chead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;min-height:22px}
   #ucinpay-root .chead h3{margin:0;font-size:15px;font-weight:660;letter-spacing:-.2px}
-  #ucinpay-root .nets{display:flex;align-items:center;gap:5px}
-  #ucinpay-root .netchip{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--fg-faint);border:1px solid var(--border);border-radius:4px;padding:3px 5px;line-height:1}
+  #ucinpay-root .nets{display:flex;align-items:center;gap:6px}
+  #ucinpay-root .netlogo{height:21px;width:auto;display:block}
   #ucinpay-root .pane{display:none;flex:1;flex-direction:column} #ucinpay-root .pane.on{display:flex}
   #ucinpay-root .fields{flex:1}
   #ucinpay-root .field{margin-bottom:13px} #ucinpay-root .field:last-of-type{margin-bottom:0}
@@ -395,8 +403,8 @@ function injectStyleOnce() {
   #ucinpay-root .qrload{font-size:11px;color:#9096A0}
   #ucinpay-root .qrside{min-width:0} #ucinpay-root .qrside .t{font-size:15px;font-weight:640;letter-spacing:-.2px} #ucinpay-root .qrside .s{font-size:12px;color:var(--fg-subtle);margin-top:8px;line-height:1.6} #ucinpay-root .qrside .s b{color:var(--fg);font-weight:600}
   #ucinpay-root .orline{display:flex;align-items:center;gap:12px;color:var(--fg-faint);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 13px} #ucinpay-root .orline::before,#ucinpay-root .orline::after{content:"";flex:1;height:1px;background:var(--border)}
-  #ucinpay-root .upiid{display:flex;gap:9px} #ucinpay-root .upiid .control{flex:1}
-  #ucinpay-root .verify{height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:640;background:var(--accent);color:var(--accent-contrast);font-size:13px;padding:0 16px;white-space:nowrap;transition:filter .14s,transform .08s} #ucinpay-root .verify:hover{filter:brightness(1.05)} #ucinpay-root .verify:disabled{opacity:.65}
+  #ucinpay-root .upiid{display:flex;flex-direction:column;gap:11px} #ucinpay-root .upiid .control{width:100%}
+  #ucinpay-root .verify{width:100%;height:46px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:11px;cursor:pointer;font-family:inherit;font-weight:640;background:var(--accent);color:var(--accent-contrast);font-size:14px;padding:0 16px;white-space:nowrap;transition:filter .14s,transform .08s} #ucinpay-root .verify:hover{filter:brightness(1.05)} #ucinpay-root .verify:active{transform:translateY(1px)} #ucinpay-root .verify:disabled{opacity:.65}
   #ucinpay-root .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   #ucinpay-root .opt{font-family:inherit;font-size:12.5px;font-weight:550;color:var(--fg-muted);background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;padding:0 13px;height:46px;display:flex;align-items:center;cursor:pointer;text-align:left;transition:border-color .14s,background .14s}
   #ucinpay-root .opt.sel{border-color:var(--accent);background:var(--tint);color:var(--accent-ink)}
@@ -404,6 +412,10 @@ function injectStyleOnce() {
   #ucinpay-root .wopt{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 15px;background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:550;cursor:pointer;color:var(--fg)} #ucinpay-root .wopt.sel{border-color:var(--accent);background:var(--tint)}
   #ucinpay-root .wdot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center} #ucinpay-root .wopt.sel .wdot{border-color:var(--accent)} #ucinpay-root .wopt.sel .wdot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
   #ucinpay-root .soon{font-size:12.5px;color:var(--fg-subtle)}
+  #ucinpay-root .handoff{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:22px 8px}
+  #ucinpay-root svg.hoicon{width:34px;height:34px;color:var(--accent);stroke-width:1.6}
+  #ucinpay-root .hotitle{font-size:14px;font-weight:660}
+  #ucinpay-root .hosub{font-size:12px;color:var(--fg-subtle);line-height:1.6;max-width:300px}
   @media (prefers-reduced-motion:reduce){#ucinpay-root *{transition:none!important}}
   @media (max-width:720px){
     #ucinpay-root .checkout{flex-direction:column;max-width:420px}
