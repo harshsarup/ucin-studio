@@ -103,23 +103,34 @@ export async function storageCount(url: string): Promise<{ file_count: number | 
   return data
 }
 
+// The estimate/scan/audit/deploy calls all run the AutoProfiler + capacity/queue
+// queries server-side, so they're far heavier than the 20s default client timeout —
+// on a cold or loaded backend that default trips before deploy can return. Give the
+// idempotent read-side calls 60s; deploy gets 120s. Deploy is deliberately NOT retried
+// (it creates a Job — a retry could produce a duplicate job and double-charge).
+const HEAVY_TIMEOUT_MS = 60_000
+const DEPLOY_TIMEOUT_MS = 120_000
+
 export async function estimateJob(req: EstimateRequest) {
-  const { data } = await api.post(`${C}/jobs/estimate`, req)
+  const { data } = await api.post(`${C}/jobs/estimate`, req, { timeout: HEAVY_TIMEOUT_MS })
   return data as { quoted_price_inr: number; etc_hrs: number | null }
 }
 
 export async function scanJob(req: EstimateRequest): Promise<SecurityReport> {
-  const { data } = await api.post<SecurityReport>(`${C}/jobs/scan`, req)
+  const { data } = await api.post<SecurityReport>(`${C}/jobs/scan`, req, { timeout: HEAVY_TIMEOUT_MS })
   return data
 }
 
 export async function auditJob(req: EstimateRequest): Promise<AuditReport> {
-  const { data } = await api.post<AuditReport>(`${C}/jobs/audit`, req)
+  const { data } = await api.post<AuditReport>(`${C}/jobs/audit`, req, { timeout: HEAVY_TIMEOUT_MS })
   return data
 }
 
 export async function deployJob(req: DeployRequest): Promise<DeployResponse> {
-  const { data } = await api.post<DeployResponse>(`${C}/jobs/deploy`, req, { validateStatus: (s) => s >= 200 && s < 300 })
+  const { data } = await api.post<DeployResponse>(`${C}/jobs/deploy`, req, {
+    timeout: DEPLOY_TIMEOUT_MS,
+    validateStatus: (s) => s >= 200 && s < 300,
+  })
   return data
 }
 

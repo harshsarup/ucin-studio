@@ -49,14 +49,59 @@ function loadSdk(): Promise<void> {
 const rupee = (n: number) => '₹' + n.toFixed(2)
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 
-// Accepted card-network marks (informational, as every checkout shows). Each SVG carries its
-// own white tile so it stays legible in the dark theme.
-const NET_LOGOS = [
-  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Visa"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="22" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-style="italic" font-size="12" letter-spacing=".4" fill="#1A1F71">VISA</text></svg>`,
-  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Mastercard"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><circle cx="18" cy="12" r="6.6" fill="#EB001B"/><circle cx="26" cy="12" r="6.6" fill="#F79E1B"/><path d="M22 6.9a6.6 6.6 0 0 0 0 10.2 6.6 6.6 0 0 0 0-10.2Z" fill="#FF5F00"/></svg>`,
-  `<svg class="netlogo" viewBox="0 0 50 24" role="img" aria-label="RuPay"><rect width="50" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="25" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="11"><tspan fill="#1D3E70">Ru</tspan><tspan fill="#E8792A">Pay</tspan></text></svg>`,
-  `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="American Express"><rect width="44" height="24" rx="4" fill="#016FD0"/><text x="22" y="15.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="8" letter-spacing=".3" fill="#fff">AMEX</text></svg>`,
-].join('')
+// ── Official brand logos: drop-in slot ───────────────────────────────────────
+// Paste the base64 data-URI of each logo from YOUR Cashfree merchant logo kit
+// (Dashboard → brand/payment-mode assets) as the value. The keys are the card
+// networks, the wallet `provider` codes, and the netbanking `netbankingBankName`
+// codes — so a filled value renders that official mark automatically everywhere.
+// Left empty, the checkout falls back to the clean marks / plain names below.
+// e.g. visa: 'data:image/svg+xml;base64,PHN2Zy4uLg=='
+const LOGOS: Record<string, string> = {
+  // card networks
+  visa: '', mastercard: '', rupay: '', amex: '',
+  // wallets (provider codes)
+  paytm: '', phonepe: '', amazon: '', mobikwik: '',
+  // netbanking (netbankingBankName codes)
+  HDFCR: '', ICICR: '', SBINR: '', UTIBR: '', KKBKR: '', YESBR: '',
+}
+
+// Clean fallback marks for the card networks (used until LOGOS above is filled).
+const CARD_FALLBACK: Record<string, string> = {
+  visa: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Visa"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="22" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-style="italic" font-size="12" letter-spacing=".4" fill="#1A1F71">VISA</text></svg>`,
+  mastercard: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="Mastercard"><rect width="44" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><circle cx="18" cy="12" r="6.6" fill="#EB001B"/><circle cx="26" cy="12" r="6.6" fill="#F79E1B"/><path d="M22 6.9a6.6 6.6 0 0 0 0 10.2 6.6 6.6 0 0 0 0-10.2Z" fill="#FF5F00"/></svg>`,
+  rupay: `<svg class="netlogo" viewBox="0 0 50 24" role="img" aria-label="RuPay"><rect width="50" height="24" rx="4" fill="#fff" stroke="#E3E5EA"/><text x="25" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="11"><tspan fill="#1D3E70">Ru</tspan><tspan fill="#E8792A">Pay</tspan></text></svg>`,
+  amex: `<svg class="netlogo" viewBox="0 0 44 24" role="img" aria-label="American Express"><rect width="44" height="24" rx="4" fill="#016FD0"/><text x="22" y="15.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="8" letter-spacing=".3" fill="#fff">AMEX</text></svg>`,
+}
+
+/** Official <img> mark if the kit asset is present, else the clean fallback SVG (cards). */
+function netMark(key: string, label: string): string {
+  return LOGOS[key] ? `<img class="netlogo" src="${LOGOS[key]}" alt="${esc(label)}">` : (CARD_FALLBACK[key] || '')
+}
+/** Small inline logo for a bank/wallet row when the kit asset is present, else nothing. */
+function rowLogo(key: string, cls: string): string {
+  return LOGOS[key] ? `<img class="${cls}" src="${LOGOS[key]}" alt="">` : ''
+}
+const NET_LOGOS = netMark('visa', 'Visa') + netMark('mastercard', 'Mastercard') + netMark('rupay', 'RuPay') + netMark('amex', 'American Express')
+
+// Inputs are collected on OUR UI; cashfree.pay() then redirects only for the final
+// bank/OTP auth. These two maps drive the inline Net-Banking and Wallet selectors.
+// Netbanking codes are Cashfree's `netbankingBankName` values (docs → element appendix).
+const NB_BANKS: { name: string; code: string }[] = [
+  { name: 'HDFC Bank', code: 'HDFCR' },
+  { name: 'ICICI Bank', code: 'ICICR' },
+  { name: 'State Bank of India', code: 'SBINR' },
+  { name: 'Axis Bank', code: 'UTIBR' },
+  { name: 'Kotak Mahindra', code: 'KKBKR' },
+  { name: 'Yes Bank', code: 'YESBR' },
+]
+// Cashfree wallet `provider` values (docs → element appendix): phonepe, paytm, ola,
+// amazon, airtel, freecharge, mobikwik, jio, payzapp. (Amazon Pay is "amazon".)
+const WALLETS: { name: string; code: string }[] = [
+  { name: 'Paytm', code: 'paytm' },
+  { name: 'PhonePe', code: 'phonepe' },
+  { name: 'Amazon Pay', code: 'amazon' },
+  { name: 'Mobikwik', code: 'mobikwik' },
+]
 
 /** Cashfree Elements input styling, matched to the checkout theme (reads the scoped CSS vars). */
 function elementStyle(root: HTMLElement) {
@@ -153,62 +198,74 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
       const label = 'Pay ' + rupee(opts.amountInr)
       busy(payCard, true, label)
       try {
-        // VERIFY: Cashfree links the four sub-elements to `cardNumber`; confirm passing it works.
+        // Cashfree docs: pass the card component group (cardNumber); all four must be complete.
         const res = await cashfree.pay({ paymentMethod: cardNumber, paymentSessionId: opts.paymentSessionId })
         if (res && res.error) { busy(payCard, false, label); return }
         done('success')
       } catch { busy(payCard, false, label) }
     })
 
-    // UPI collect (VPA)
+    // UPI collect (VPA) — per Cashfree docs: paymentMethod { upi: { upiId } }.
     const payUpi = $('.verify') as HTMLButtonElement
     payUpi?.addEventListener('click', async () => {
-      const vpa = ($('#upi .control input') as HTMLInputElement).value.trim()
+      const vpa = ($('#upi .upiid .control input') as HTMLInputElement).value.trim()
       if (!vpa) return
       busy(payUpi, true, 'Verify & pay')
       try {
-        // VERIFY: Cashfree v3 UPI-collect shape.
-        const res = await cashfree.pay({ paymentMethod: { upi: { channel: 'collect', upi_id: vpa } }, paymentSessionId: opts.paymentSessionId })
+        const res = await cashfree.pay({ paymentMethod: { upi: { upiId: vpa } }, paymentSessionId: opts.paymentSessionId })
         if (res && res.error) { busy(payUpi, false, 'Verify & pay'); return }
         done('success')
       } catch { busy(payUpi, false, 'Verify & pay') }
     })
 
-    // Real UPI QR (never a fake one): try to fetch a genuine Cashfree QR; hide the card if unavailable.
-    void renderRealUpiQr(cashfree, opts, $)
+    // Real UPI QR — Cashfree's `upiQr` component renders a genuine scannable code, then
+    // pay() listens for the scan. Mount into the QR card; hide it if the SDK can't provide one.
+    try {
+      const qr = cashfree.create('upiQr', { values: { size: '150px' } })
+      const slot = $('#upi-qr'); if (slot) slot.innerHTML = ''
+      qr.mount('#upi-qr')
+      cashfree.pay({ paymentMethod: qr, paymentSessionId: opts.paymentSessionId })
+        .then((res: any) => { if (res && !res.error) done('success') })
+        .catch(() => { /* user paid another way, or QR unused */ })
+    } catch {
+      const qw = $('#upi .qrwrap'); if (qw) qw.classList.add('noqr')
+    }
 
-    // Net Banking + Wallets — keep the approved inline selection UI, complete via the hosted
-    // Cashfree modal (reliable) rather than guessing per-bank/per-wallet payloads.
-    // VERIFY: these can be made fully inline later with cashfree.pay({ paymentMethod:{ netbanking|app } }).
-    ;['#nb .paybtn', '#wallet .paybtn'].forEach((sel) => {
-      const b = $(sel) as HTMLButtonElement
-      b?.addEventListener('click', async () => {
-        const label = b.textContent || 'Pay'
-        busy(b, true, label)
-        try {
-          const res = await cashfree.checkout({ paymentSessionId: opts.paymentSessionId, redirectTarget: '_modal' })
-          if (res && res.error) { busy(b, false, label); return }
-          done('success')
-        } catch { busy(b, false, label) }
-      })
+    // Net Banking — bank is chosen on OUR UI; cashfree.pay() then redirects to that
+    // bank's login for auth (unavoidable for the netbanking rail, and acceptable).
+    const payNb = $('#nb .paybtn') as HTMLButtonElement
+    payNb?.addEventListener('click', async () => {
+      const chosen = $('#nb .opt.sel') as HTMLElement | null
+      const code = chosen?.getAttribute('data-code') || ''
+      const label = payNb.textContent || 'Continue'
+      if (!code) { /* code not yet filled from Cashfree's bank-code list */ return }
+      busy(payNb, true, label)
+      try {
+        // Cashfree docs: paymentMethod { netbanking: { netbankingBankName: "HDFCR" } }.
+        const res = await cashfree.pay({ paymentMethod: { netbanking: { netbankingBankName: code } }, paymentSessionId: opts.paymentSessionId })
+        if (res && res.error) { busy(payNb, false, label); return }
+        done('success')
+      } catch { busy(payNb, false, label) }
+    })
+
+    // Wallets — wallet is chosen on OUR UI; cashfree.pay() routes to it.
+    const payWallet = $('#wallet .paybtn') as HTMLButtonElement
+    payWallet?.addEventListener('click', async () => {
+      const chosen = $('#wallet .wopt.sel') as HTMLElement | null
+      const provider = chosen?.getAttribute('data-code') || ''
+      const phone = ($('#wallet .wphone') as HTMLInputElement)?.value.trim() || ''
+      const label = payWallet.textContent || 'Continue'
+      if (!provider) return
+      if (!/^\d{10}$/.test(phone)) { ($('#wallet .wphone') as HTMLInputElement)?.focus(); return }
+      busy(payWallet, true, label)
+      try {
+        // Cashfree docs: paymentMethod { wallet: { provider, phone } } (10-digit phone required).
+        const res = await cashfree.pay({ paymentMethod: { wallet: { provider, phone } }, paymentSessionId: opts.paymentSessionId })
+        if (res && res.error) { busy(payWallet, false, label); return }
+        done('success')
+      } catch { busy(payWallet, false, label) }
     })
   })
-}
-
-/** Attempt a genuine Cashfree UPI QR. On any uncertainty we hide the QR card and let the
- *  UPI-ID collect flow stand alone — we never present a non-functional QR in a live modal. */
-async function renderRealUpiQr(cashfree: any, opts: CheckoutOpts, $: (s: string) => HTMLElement) {
-  const wrap = $('#upi .qrcard')
-  const hide = () => { const qw = $('#upi .qrwrap'); if (qw) qw.classList.add('noqr') }
-  try {
-    // VERIFY: exact API for a scannable UPI QR (returns an image/data-URL). If it doesn't
-    // match, we fall through to hide() so no decorative/fake QR is ever shown.
-    const res = await cashfree.pay({ paymentMethod: { upi: { channel: 'qrcode' } }, paymentSessionId: opts.paymentSessionId })
-    const url = res?.data?.payload?.qrcode || res?.data?.url || res?.qrcode
-    if (typeof url === 'string' && url) {
-      wrap.innerHTML = `<img alt="UPI QR" src="${esc(url)}" style="width:130px;height:130px;image-rendering:pixelated;border-radius:2px">`
-    } else { hide() }
-  } catch { hide() }
 }
 
 // ── markup (ported 1:1 from the approved artifact) ───────────────────────────
@@ -268,7 +325,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
               <div class="chead"><h3>UPI / QR</h3></div>
               <div class="fields">
                 <div class="qrwrap">
-                  <div class="qrcard"><div class="qrload">Loading QR…</div></div>
+                  <div class="qrcard" id="upi-qr"><div class="qrload">Loading QR…</div></div>
                   <div class="qrside"><div class="t">Scan &amp; pay ${amt}</div><div class="s">Open <b>GPay, PhonePe, Paytm</b> or any UPI app and scan this code.</div></div>
                 </div>
                 <div class="orline">or enter UPI ID</div>
@@ -291,20 +348,19 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
 
             <div class="pane" id="nb">
               <div class="chead"><h3>Net Banking</h3></div>
-              <div class="fields handoff">
-                <svg class="i hoicon" viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
-                <div class="hotitle">All major banks supported</div>
-                <div class="hosub">HDFC, ICICI, SBI, Axis, Kotak &amp; 50+ more — continue to Cashfree's secure selector, where every bank appears with its official logo.</div>
-              </div>
+              <div class="fields"><div class="grid2">
+                ${NB_BANKS.map((b, i) => `<button class="opt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(b.code)}">${rowLogo(b.code, 'optlogo')}${esc(b.name)}</button>`).join('')}
+              </div></div>
               <button class="paybtn" type="button">Continue with Net Banking</button>
             </div>
 
             <div class="pane" id="wallet">
               <div class="chead"><h3>Wallets</h3></div>
-              <div class="fields handoff">
-                <svg class="i hoicon" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                <div class="hotitle">Paytm, PhonePe, Amazon Pay &amp; more</div>
-                <div class="hosub">Continue to Cashfree's secure wallet selector, where each wallet appears with its official logo.</div>
+              <div class="fields">
+                <div class="wlist">
+                  ${WALLETS.map((w, i) => `<button class="wopt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(w.code)}"><span>${rowLogo(w.code, 'wlogo')}${esc(w.name)}</span><span class="wdot"></span></button>`).join('')}
+                </div>
+                <div class="field wphone-field"><label>Mobile number</label><div class="control"><input class="wphone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" aria-label="Mobile number"></div></div>
               </div>
               <button class="paybtn" type="button">Continue with Wallets</button>
             </div>
@@ -412,6 +468,10 @@ function injectStyleOnce() {
   #ucinpay-root .wopt{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 15px;background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:550;cursor:pointer;color:var(--fg)} #ucinpay-root .wopt.sel{border-color:var(--accent);background:var(--tint)}
   #ucinpay-root .wdot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center} #ucinpay-root .wopt.sel .wdot{border-color:var(--accent)} #ucinpay-root .wopt.sel .wdot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
   #ucinpay-root .soon{font-size:12.5px;color:var(--fg-subtle)}
+  #ucinpay-root .wphone-field{margin-top:13px}
+  #ucinpay-root .optlogo{height:18px;width:auto;margin-right:9px;flex-shrink:0}
+  #ucinpay-root .wopt > span{display:inline-flex;align-items:center}
+  #ucinpay-root .wlogo{height:20px;width:auto;margin-right:10px;flex-shrink:0}
   #ucinpay-root .handoff{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:22px 8px}
   #ucinpay-root svg.hoicon{width:34px;height:34px;color:var(--accent);stroke-width:1.6}
   #ucinpay-root .hotitle{font-size:14px;font-weight:660}
