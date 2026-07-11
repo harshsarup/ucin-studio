@@ -156,7 +156,14 @@ function loadCashfreeSdk(): Promise<void> {
 export async function payStudioJob(jobId: string): Promise<void> {
   const { data } = await api.post<StudioOrder>(`${C}/studio/order`, { job_id: jobId })
   if (CUSTOM_CHECKOUT) {
-    const r = await openCashfreeCheckout({ mode: data.env, paymentSessionId: data.payment_session_id, amountInr: data.amount_inr })
+    const r = await openCashfreeCheckout({
+      mode: data.env,
+      paymentSessionId: data.payment_session_id,
+      amountInr: data.amount_inr,
+      merchant: 'UCIN Studio',
+      subtitle: 'Creative studio · pay per job',
+      note: 'Fixed — never billed above',
+    })
     if (r !== 'success') throw new Error('Payment was not completed')
   } else {
     await loadCashfreeSdk()
