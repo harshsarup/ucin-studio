@@ -129,6 +129,13 @@ export async function getJob(jobId: string): Promise<JobStatus> {
 }
 
 // ── Studio per-event checkout (one-off Cashfree order → run) ─────────────────
+import { openCashfreeCheckout } from '@/lib/cashfreeCheckout'
+
+// Custom-branded Cashfree Elements checkout (the approved design). OFF until sandbox-verified;
+// the hosted `_modal` checkout is the fallback so an unverified Elements path can't break payments.
+// TEMPORARILY ON for sandbox verification — revert to false before shipping if the two VERIFY spots fail.
+const CUSTOM_CHECKOUT = true
+
 interface StudioOrder { order_id: string; payment_session_id: string; env: 'sandbox' | 'production'; amount_inr: number }
 
 function loadCashfreeSdk(): Promise<void> {
@@ -148,13 +155,18 @@ function loadCashfreeSdk(): Promise<void> {
  *  job (pending_payment → queued). Throws if the user cancels or payment fails. */
 export async function payStudioJob(jobId: string): Promise<void> {
   const { data } = await api.post<StudioOrder>(`${C}/studio/order`, { job_id: jobId })
-  await loadCashfreeSdk()
-  const Cashfree = (window as unknown as { Cashfree: (o: { mode: string }) => { checkout: (o: Record<string, unknown>) => Promise<{ error?: { message?: string } }> } }).Cashfree
-  const result = await Cashfree({ mode: data.env }).checkout({
-    paymentSessionId: data.payment_session_id,
-    redirectTarget: '_modal',
-  })
-  if (result?.error) throw new Error(result.error.message || 'Payment was not completed')
+  if (CUSTOM_CHECKOUT) {
+    const r = await openCashfreeCheckout({ mode: data.env, paymentSessionId: data.payment_session_id, amountInr: data.amount_inr })
+    if (r !== 'success') throw new Error('Payment was not completed')
+  } else {
+    await loadCashfreeSdk()
+    const Cashfree = (window as unknown as { Cashfree: (o: { mode: string }) => { checkout: (o: Record<string, unknown>) => Promise<{ error?: { message?: string } }> } }).Cashfree
+    const result = await Cashfree({ mode: data.env }).checkout({
+      paymentSessionId: data.payment_session_id,
+      redirectTarget: '_modal',
+    })
+    if (result?.error) throw new Error(result.error.message || 'Payment was not completed')
+  }
   // The webhook releases the job (source of truth); wait (bounded) for it to leave pending_payment.
   const deadline = Date.now() + 90_000
   for (;;) {
