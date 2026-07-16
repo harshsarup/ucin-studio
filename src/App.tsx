@@ -10,6 +10,7 @@ const Login = lazy(() => import('@/pages/Login').then((m) => ({ default: m.Login
 const Team = lazy(() => import('@/pages/Team').then((m) => ({ default: m.Team })))
 const DesktopDownload = lazy(() => import('@/pages/DesktopDownload').then((m) => ({ default: m.DesktopDownload })))
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
+const Pay = lazy(() => import('@/pages/Pay').then((m) => ({ default: m.Pay })))
 const Privacy = lazy(() => import('@/pages/Privacy').then((m) => ({ default: m.Privacy })))
 const Terms = lazy(() => import('@/pages/Terms').then((m) => ({ default: m.Terms })))
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/team" element={<Team />} />
             <Route path="/download" element={<DesktopDownload />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/pay" element={<Pay />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             {/* Unknown paths land on the site, never a blank page. */}
