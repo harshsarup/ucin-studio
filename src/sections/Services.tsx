@@ -20,8 +20,9 @@ export function Services() {
           <h2 className="display" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 4.4rem)' }}>Any task. Any look. Any <span className="text-grad">volume.</span></h2>
           <p className="mt-5 text-lg leading-relaxed text-fg-subtle">
             The whole pipeline — weddings, catalogs, campaigns, content — on curated state-of-the-art
-            models, or bring your own. From culling to final delivery, you keep the craft; we handle
-            the volume.
+            models, or <span className="text-fg">bring your own from HuggingFace</span> (private and
+            gated models included — your token stays in your device keychain and runs on an isolated
+            node). From culling to final delivery, you keep the craft; we handle the volume.
           </p>
         </Reveal>
 
