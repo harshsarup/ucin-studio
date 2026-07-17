@@ -177,14 +177,30 @@ export function usesDials(preset: Preset | undefined): boolean {
   return preset?.deliveredShare != null
 }
 
-/** Pre-fill the dials from the preset's outcome shape. */
+/** Below this input size, percentage culling is meaningless (round(1×16%)=0
+ *  would deliver ZERO photos) — small shoots default to finishing everything,
+ *  and the UI hides the percentage bands entirely. */
+export const SLA_SMALL_SHOOT_MAX = 100
+
+/** Pre-fill the dials from the preset's outcome shape. Small shoots finish
+ *  every frame; large ones target the preset's industry-standard share. */
 export function defaultDials(preset: Preset, inputCount: number): OutcomeDials {
-  const delivered = Math.max(0, Math.round(inputCount * (preset.deliveredShare ?? 0.16)))
+  const delivered = inputCount <= SLA_SMALL_SHOOT_MAX
+    ? inputCount
+    : Math.max(1, Math.round(inputCount * (preset.deliveredShare ?? 0.16)))
   return {
     inputCount,
     deliveredTarget: delivered,
-    heroCount: Math.max(0, Math.round(delivered * (preset.heroShare ?? 0))),
+    heroCount: Math.min(delivered, Math.max(0, Math.round(delivered * (preset.heroShare ?? 0)))),
   }
+}
+
+/** The delivered-dial band chips, with MEANING — the customer shouldn't need
+ *  to know culling ratios; the preset default is marked recommended. */
+export const SLA_BAND_LABELS: Record<number, string> = {
+  0.12: 'Tight edit',
+  0.16: 'Standard delivery',
+  0.25: 'Generous',
 }
 
 /**

@@ -13,7 +13,7 @@ import {
   VERTICALS, TASKS, SPEED_TIERS, TOGGLES, NO_TOGGLES,
   presetsFor, defaultCounts, quoteEvent, modelsFor,
   usesDials, defaultDials, dialsToLines, type OutcomeDials,
-  SLA_DELIVERED_BANDS, SLA_DELIVERED_TOLERANCE_PCT,
+  SLA_DELIVERED_BANDS, SLA_DELIVERED_TOLERANCE_PCT, SLA_SMALL_SHOOT_MAX, SLA_BAND_LABELS,
 } from '@/lib/catalog'
 import { checkBatch, fmtBytes, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
@@ -482,14 +482,22 @@ export function AppPage() {
             {totalItems > 0 && dialMode && dials ? (
               <Field
                 label="Your gallery"
-                hint={`We cull all ${totalItems.toLocaleString('en-IN')} — you choose the finished gallery (±${SLA_DELIVERED_TOLERANCE_PCT}%).`}
+                hint={
+                  totalItems <= SLA_SMALL_SHOOT_MAX
+                    ? 'A small set — we finish every good frame (bad ones are dropped and never billed).'
+                    : `We cull all ${totalItems.toLocaleString('en-IN')} — you choose the finished gallery (±${SLA_DELIVERED_TOLERANCE_PCT}%).`
+                }
               >
                 <div className="space-y-3">
                   <div className="rounded-lg border border-canvas-border px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-[14px] text-fg">Finished photos</div>
-                        <div className="text-[12px] text-fg-faint">The gallery you deliver — we keep the best, drop the rest.</div>
+                        <div className="text-[12px] text-fg-faint">
+                          {totalItems <= SLA_SMALL_SHOOT_MAX
+                            ? `All ${totalItems.toLocaleString('en-IN')} ${totalItems === 1 ? 'frame' : 'frames'} by default — lower it to keep only the best.`
+                            : 'The gallery you deliver — we keep the best, drop the rest.'}
+                        </div>
                       </div>
                       <input
                         type="number"
@@ -500,25 +508,36 @@ export function AppPage() {
                         onChange={(e) => setDial({ deliveredTarget: Number(e.target.value) })}
                       />
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {SLA_DELIVERED_BANDS.map((b) => {
-                        const n = Math.round(totalItems * b)
-                        const on = dials.deliveredTarget === n
-                        return (
-                          <button
-                            key={b}
-                            type="button"
-                            onClick={() => setDial({ deliveredTarget: n })}
-                            className="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
-                            style={on
-                              ? { borderColor: 'var(--accent)', background: 'var(--tint)', color: 'var(--accent)' }
-                              : { borderColor: 'var(--border)', color: 'var(--fg-subtle)' }}
-                          >
-                            Top {Math.round(b * 100)}% · {n.toLocaleString('en-IN')}
-                          </button>
-                        )
-                      })}
-                    </div>
+                    {/* Percentage bands only make sense at shoot scale; ★ marks the
+                        preset's industry-standard default — nothing to know. */}
+                    {totalItems > SLA_SMALL_SHOOT_MAX && (
+                      <>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {SLA_DELIVERED_BANDS.map((b) => {
+                            const n = Math.round(totalItems * b)
+                            const on = dials.deliveredTarget === n
+                            const recommended = b === (preset?.deliveredShare ?? 0.16)
+                            return (
+                              <button
+                                key={b}
+                                type="button"
+                                onClick={() => setDial({ deliveredTarget: n })}
+                                className="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
+                                style={on
+                                  ? { borderColor: 'var(--accent)', background: 'var(--tint)', color: 'var(--accent)' }
+                                  : { borderColor: 'var(--border)', color: 'var(--fg-subtle)' }}
+                              >
+                                {SLA_BAND_LABELS[b] ?? `Top ${Math.round(b * 100)}%`} · {n.toLocaleString('en-IN')}{recommended ? ' ★' : ''}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <p className="mt-1.5 text-[12px] text-fg-faint">
+                          Not sure? Keep ★ — it's what studios typically deliver for this kind of shoot.
+                          The exact count lands wherever the natural cut falls (±{SLA_DELIVERED_TOLERANCE_PCT}%).
+                        </p>
+                      </>
+                    )}
                   </div>
                   {(preset?.tasks ?? []).some((t) => t.taskId === 'retouch') && (
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-canvas-border px-3 py-2.5">
