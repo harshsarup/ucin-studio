@@ -77,6 +77,20 @@ export function speedTier(id: Tier): SpeedTier {
   return SPEED_TIERS.find((s) => s.id === id) ?? SPEED_TIERS[0]
 }
 
+// ── Outcome SLA constants (OUTCOME_SLA_SPEC.md) ───────────────────────────────
+// MIRRORS ucin_network_factory/models.py SLA_* and ucin_creator_studio
+// catalog.ts — guarded by the 3-way catalog-sync drift test. The pricing-parity
+// rule: derive the enhance ITEM COUNT first (Math.round(E_INC × delivered)),
+// then price count × rate — never delivered × rate × E_INC. Math.round's
+// half-up matches the server's _js_round exactly.
+
+/** Expected enhance/upscale incidence on the delivered set, per vertical. */
+export const SLA_ENHANCE_INCIDENCE: Partial<Record<Vertical, number>> = { photo: 0.30 }
+/** Delivered-size tolerance band (±%): culling is judgment, not arithmetic. */
+export const SLA_DELIVERED_TOLERANCE_PCT = 10
+/** Band presets for the delivered dial (fraction of input count). */
+export const SLA_DELIVERED_BANDS = [0.12, 0.16, 0.25] as const
+
 // ── Presets ───────────────────────────────────────────────────────────────────
 
 export interface PresetTask {
@@ -90,18 +104,27 @@ export interface Preset {
   label: string
   blurb: string
   tasks: PresetTask[]
+  /** Outcome-dial pre-fills (photo verticals): delivered gallery as a fraction
+   *  of input, and heroes as a fraction of DELIVERED (so it scales with the
+   *  gallery). Absent → the builder keeps per-step defaultShare behavior. */
+  deliveredShare?: number
+  heroShare?: number
 }
 
 export const PRESETS: Preset[] = [
   // Photographer / Studio
   { id: 'wedding-full', vertical: 'photo', label: 'Full wedding', blurb: 'Cull, grade in your style, enhance & retouch the heroes',
-    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.35 }, { taskId: 'enhance', defaultShare: 0.05 }, { taskId: 'retouch', defaultShare: 0.05 } ] },
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.35 }, { taskId: 'enhance', defaultShare: 0.05 }, { taskId: 'retouch', defaultShare: 0.05 } ],
+    deliveredShare: 0.16, heroShare: 0.04 },
   { id: 'portraits', vertical: 'photo', label: 'Portrait session', blurb: 'Cull, grade & retouch every keeper',
-    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.4 }, { taskId: 'retouch', defaultShare: 0.4 } ] },
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.4 }, { taskId: 'retouch', defaultShare: 0.4 } ],
+    deliveredShare: 0.25, heroShare: 1 },
   { id: 'event-highlights', vertical: 'photo', label: 'Event highlights', blurb: 'Cull the take, grade the keepers',
-    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.3 } ] },
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.3 } ],
+    deliveredShare: 0.16, heroShare: 0 },
   { id: 'sneak-peek', vertical: 'photo', label: 'Sneak peek', blurb: 'A fast, graded teaser set',
-    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.05 } ] },
+    tasks: [ { taskId: 'cull', defaultShare: 1 }, { taskId: 'grade', defaultShare: 0.05 } ],
+    deliveredShare: 0.05, heroShare: 0 },
   // Brands (id: ecom)
   { id: 'catalog', vertical: 'ecom', label: 'Product catalog', blurb: 'Cut out & standardise the whole catalog',
     tasks: [ { taskId: 'remove-bg', defaultShare: 1 }, { taskId: 'enhance', defaultShare: 1 } ] },
@@ -137,6 +160,56 @@ export function defaultCounts(preset: Preset, totalItems: number): Record<TaskId
     out[t.taskId] = Math.max(0, Math.round(totalItems * t.defaultShare))
   }
   return out
+}
+
+// ── Outcome dials → step counts (OUTCOME_SLA_SPEC.md) ─────────────────────────
+
+/** The 3 numbers the customer actually knows. Everything else derives. */
+export interface OutcomeDials {
+  inputCount: number
+  deliveredTarget: number
+  heroCount: number
+}
+
+/** Does this preset use the outcome-dial model? (photo verticals, pre-filled
+ *  via deliveredShare/heroShare). Others keep the per-step defaultShare flow. */
+export function usesDials(preset: Preset | undefined): boolean {
+  return preset?.deliveredShare != null
+}
+
+/** Pre-fill the dials from the preset's outcome shape. */
+export function defaultDials(preset: Preset, inputCount: number): OutcomeDials {
+  const delivered = Math.max(0, Math.round(inputCount * (preset.deliveredShare ?? 0.16)))
+  return {
+    inputCount,
+    deliveredTarget: delivered,
+    heroCount: Math.max(0, Math.round(delivered * (preset.heroShare ?? 0))),
+  }
+}
+
+/**
+ * The dial → step-count derivation (parity twin of the server's
+ * _dials_to_batch_plan): cull runs on everything, grade on the delivered set,
+ * enhance is need-based at expected incidence (count derived FIRST, half-up),
+ * retouch on the heroes. Only steps the preset includes are emitted.
+ */
+export function dialsToLines(dials: OutcomeDials, preset: Preset): { taskId: TaskId; count: number }[] {
+  const eInc = SLA_ENHANCE_INCIDENCE[preset.vertical] ?? 0.30
+  const counts: Partial<Record<TaskId, number>> = {
+    cull: dials.inputCount,
+    grade: dials.deliveredTarget,
+    enhance: Math.round(eInc * dials.deliveredTarget),
+    retouch: dials.heroCount,
+  }
+  return preset.tasks
+    .map((t) => ({ taskId: t.taskId, count: counts[t.taskId] ?? Math.round(dials.inputCount * t.defaultShare) }))
+    .filter((l) => l.count > 0)
+}
+
+/** The outcome quote — the same fixed-price math (quoteEvent) over dial-derived
+ *  lines, so client quote == server contract == Σ batch bills. */
+export function slaQuote(dials: OutcomeDials, preset: Preset, speedId: Tier, toggles: EventToggles): EventQuote {
+  return quoteEvent(dialsToLines(dials, preset), speedId, toggles)
 }
 
 // ── Recommended models: specialised per workspace (curated) ───────────────────

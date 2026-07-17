@@ -12,6 +12,8 @@ import type { Tier, TaskId, Vertical, EventToggles } from '@/lib/catalog'
 import {
   VERTICALS, TASKS, SPEED_TIERS, TOGGLES, NO_TOGGLES,
   presetsFor, defaultCounts, quoteEvent, modelsFor,
+  usesDials, defaultDials, dialsToLines, type OutcomeDials,
+  SLA_DELIVERED_BANDS, SLA_DELIVERED_TOLERANCE_PCT,
 } from '@/lib/catalog'
 import { checkBatch, fmtBytes, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
@@ -120,13 +122,43 @@ export function AppPage() {
     setVertical(v)
   }
 
+  // Outcome dials (photo presets): the 3 numbers the customer actually knows.
+  // Step counts DERIVE from these — never typed per step (OUTCOME_SLA_SPEC.md).
+  const [dials, setDials] = useState<OutcomeDials | null>(null)
+  const dialMode = usesDials(preset)
+
+  // Files auto-count the input; the number field is only an estimator until then.
   useEffect(() => {
-    if (preset) setCounts(defaultCounts(preset, totalItems))
+    if (files.length > 0) setTotalItems(files.length)
+  }, [files.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!preset) return
+    if (usesDials(preset)) {
+      const d = defaultDials(preset, totalItems)
+      setDials(d)
+      setCounts(Object.fromEntries(dialsToLines(d, preset).map((l) => [l.taskId, l.count])) as Record<string, number>)
+    } else {
+      setDials(null)
+      setCounts(defaultCounts(preset, totalItems))
+    }
   }, [presetId, totalItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Move a dial: clamp to sane bounds, then re-derive every step count. */
+  const setDial = (patch: Partial<OutcomeDials>): void => {
+    if (!preset || !dials) return
+    const d = { ...dials, ...patch, inputCount: totalItems }
+    d.deliveredTarget = Math.max(0, Math.min(Math.round(d.deliveredTarget || 0), d.inputCount))
+    d.heroCount = Math.max(0, Math.min(Math.round(d.heroCount || 0), d.deliveredTarget))
+    setDials(d)
+    setCounts(Object.fromEntries(dialsToLines(d, preset).map((l) => [l.taskId, l.count])) as Record<string, number>)
+  }
 
   const lines = (preset?.tasks ?? []).map((t) => ({ taskId: t.taskId, count: counts[t.taskId] ?? 0 }))
   const quote = quoteEvent(lines, speedId, toggles)
   const speed = SPEED_TIERS.find((s) => s.id === speedId)!
+  // Style/model only matters when a model-driven step is in the plan.
+  const modelDriven = lines.some((l) => l.count > 0 && ['grade', 'enhance', 'generate'].includes(l.taskId))
 
   // ── Browser submission: small single-step batches only; the rest → desktop ──
   const batch = checkBatch(files)
@@ -188,14 +220,26 @@ export function AppPage() {
     if (!aiPlan) return
     const fallback = totalItems || aiPlan.lines.reduce((m, l) => Math.max(m, l.count ?? 0), 0)
     if (!totalItems && fallback) setTotalItems(fallback)
-    setCounts((c) => ({
-      ...c,
-      ...Object.fromEntries(
-        aiPlan.lines
-          .map((l) => [toTaskId(l.action_id), l.count ?? fallback] as const)
-          .filter(([id]) => id != null),
-      ),
-    }))
+    if (dialMode && dials) {
+      // Dial presets: the plan maps onto the dials (the single source of truth),
+      // so a later preset/count change can't silently overwrite it.
+      const byTask = Object.fromEntries(
+        aiPlan.lines.map((l) => [toTaskId(l.action_id), l.count ?? 0] as const).filter(([id]) => id != null),
+      ) as Partial<Record<TaskId, number>>
+      setDial({
+        deliveredTarget: byTask.grade ?? dials.deliveredTarget,
+        heroCount: byTask.retouch ?? dials.heroCount,
+      })
+    } else {
+      setCounts((c) => ({
+        ...c,
+        ...Object.fromEntries(
+          aiPlan.lines
+            .map((l) => [toTaskId(l.action_id), l.count ?? fallback] as const)
+            .filter(([id]) => id != null),
+        ),
+      }))
+    }
     if (aiPlan.speed && SPEED_TIERS.some((s) => s.id === aiPlan.speed)) setSpeedId(aiPlan.speed as Tier)
   }
 
@@ -416,18 +460,91 @@ export function AppPage() {
               </div>
             </Field>
 
-            <Field label={`How many ${labels.object.toLowerCase()} items?`} hint="The number of photos / frames in this job.">
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={totalItems || ''}
-                onChange={(e) => setTotalItems(Math.max(0, Math.round(Number(e.target.value) || 0)))}
-                placeholder="e.g. 1800"
-              />
-            </Field>
+            {files.length > 0 ? (
+              <Field label={`Your ${labels.object.toLowerCase()}`} hint="Counted from your files — nothing to type.">
+                <div className="rounded-lg border border-canvas-border bg-canvas-surface px-3 py-2 text-[15px] text-fg">
+                  {totalItems.toLocaleString('en-IN')} {totalItems === 1 ? 'frame' : 'frames'} in
+                </div>
+              </Field>
+            ) : (
+              <Field label={`How many ${labels.object.toLowerCase()} items?`} hint="An estimate is fine — your files set the real count when you add them.">
+                <input
+                  type="number"
+                  min={0}
+                  className={inputCls}
+                  value={totalItems || ''}
+                  onChange={(e) => setTotalItems(Math.max(0, Math.round(Number(e.target.value) || 0)))}
+                  placeholder="e.g. 5000"
+                />
+              </Field>
+            )}
 
-            {totalItems > 0 && (
+            {totalItems > 0 && dialMode && dials ? (
+              <Field
+                label="Your gallery"
+                hint={`We cull all ${totalItems.toLocaleString('en-IN')} — you choose the finished gallery (±${SLA_DELIVERED_TOLERANCE_PCT}%).`}
+              >
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-canvas-border px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[14px] text-fg">Finished photos</div>
+                        <div className="text-[12px] text-fg-faint">The gallery you deliver — we keep the best, drop the rest.</div>
+                      </div>
+                      <input
+                        type="number"
+                        min={0}
+                        max={totalItems}
+                        className={`${inputCls} w-28 text-right`}
+                        value={dials.deliveredTarget}
+                        onChange={(e) => setDial({ deliveredTarget: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {SLA_DELIVERED_BANDS.map((b) => {
+                        const n = Math.round(totalItems * b)
+                        const on = dials.deliveredTarget === n
+                        return (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => setDial({ deliveredTarget: n })}
+                            className="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
+                            style={on
+                              ? { borderColor: 'var(--accent)', background: 'var(--tint)', color: 'var(--accent)' }
+                              : { borderColor: 'var(--border)', color: 'var(--fg-subtle)' }}
+                          >
+                            Top {Math.round(b * 100)}% · {n.toLocaleString('en-IN')}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {(preset?.tasks ?? []).some((t) => t.taskId === 'retouch') && (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-canvas-border px-3 py-2.5">
+                      <div className="min-w-0">
+                        <div className="text-[14px] text-fg">Hero retouches</div>
+                        <div className="text-[12px] text-fg-faint">Full skin & cleanup on your showcase shots · {fmtINR(TASKS.retouch.flatRateInr)} / photo</div>
+                      </div>
+                      <input
+                        type="number"
+                        min={0}
+                        max={dials.deliveredTarget}
+                        className={`${inputCls} w-24 text-right`}
+                        value={dials.heroCount}
+                        onChange={(e) => setDial({ heroCount: Number(e.target.value) })}
+                      />
+                    </div>
+                  )}
+                  {(preset?.tasks ?? []).some((t) => t.taskId === 'enhance') && (
+                    <p className="px-1 text-[12px] text-fg-faint">
+                      Enhance / upscale is need-based — any finished photo below the quality floor
+                      is fixed automatically, priced into the quote.
+                    </p>
+                  )}
+                </div>
+              </Field>
+            ) : totalItems > 0 && (
               <Field label="Steps" hint="Auto-filled from the preset — edit any count.">
                 <div className="space-y-2">
                   {(preset?.tasks ?? []).map((t) => {
@@ -452,6 +569,7 @@ export function AppPage() {
               </Field>
             )}
 
+            {modelDriven && (
             <Field label="Style / model" hint="A model tuned for your work — or bring your own.">
               <div className="max-h-72 space-y-1 overflow-y-auto rounded-lg border border-canvas-border p-1.5">
                 <StyleOption
@@ -499,6 +617,7 @@ export function AppPage() {
                 </div>
               </div>
             </Field>
+            )}
 
             <Field label="When do you need it?">
               <div className="grid grid-cols-3 gap-2">
