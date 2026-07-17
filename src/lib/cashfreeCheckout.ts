@@ -315,7 +315,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
           <div class="t"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>End-to-end encrypted</b>.</span></div>
           <div class="t"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8Z"/></svg><span>Stored &amp; processed <b>only in India</b>.</span></div>
         </div>
-        <div class="bsecure"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secured by <b>Cashfree Payments</b>.</div>
+        <div class="bsecure"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secured by <b>Cashfree Payments</b></div>
       </aside>
 
       <section class="pay">
