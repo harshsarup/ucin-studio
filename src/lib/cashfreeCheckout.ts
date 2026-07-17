@@ -295,6 +295,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
     <div class="checkout" role="dialog" aria-label="${merchant} payment">
       <button class="ucinpay-close" aria-label="Close">&times;</button>
       <aside class="brand">
+        <span class="bbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"/><path d="m9.3 12 1.9 1.9 3.5-3.7"/></svg>Secure</span>
         <div class="blogo" aria-hidden="true">
           <svg width="25" height="25" viewBox="0 0 40 40" fill="none">
             <path d="M10 12v10a10 10 0 0 0 20 0V12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
@@ -311,10 +312,10 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
         ${lines}
         <div class="bspacer"></div>
         <div class="btrust">
-          <div class="t"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>End-to-end encrypted</b></span></div>
-          <div class="t"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8Z"/></svg><span>Stored &amp; processed <b>only in India</b></span></div>
+          <div class="t"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>End-to-end encrypted</b>.</span></div>
+          <div class="t"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8Z"/></svg><span>Stored &amp; processed <b>only in India</b>.</span></div>
         </div>
-        <div class="bsecure"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secured by <b>Cashfree</b></div>
+        <div class="bsecure"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secured by <b>Cashfree Payments</b>.</div>
       </aside>
 
       <section class="pay">
@@ -414,7 +415,9 @@ function injectStyleOnce() {
   #ucinpay-root .checkout{position:relative;width:100%;max-width:780px;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:flex;animation:ucinpayu .2s ease}
   @keyframes ucinpayu{from{opacity:0;transform:translateY(8px)}}
   #ucinpay-root .ucinpay-close{position:absolute;top:12px;right:14px;z-index:3;border:0;background:transparent;color:var(--fg-faint);font-size:22px;line-height:1;cursor:pointer}
-  #ucinpay-root .brand{width:280px;flex-shrink:0;padding:24px;color:var(--on);background:linear-gradient(157deg,var(--brand-a),var(--brand-b));display:flex;flex-direction:column}
+  #ucinpay-root .brand{position:relative;width:280px;flex-shrink:0;padding:24px;color:var(--on);background:linear-gradient(157deg,var(--brand-a),var(--brand-b));display:flex;flex-direction:column}
+  #ucinpay-root .bbadge{position:absolute;top:16px;right:16px;display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:650;letter-spacing:.02em;color:var(--on);background:rgba(255,255,255,.14);border:1px solid var(--on-line);padding:4px 8px 4px 6px;border-radius:999px;backdrop-filter:blur(2px)}
+  #ucinpay-root .bbadge svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   #ucinpay-root .blogo{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid var(--on-line);display:grid;place-items:center}
   #ucinpay-root .bname{margin-top:14px;font-size:14.5px;font-weight:640}
   #ucinpay-root .bfor{font-size:11px;color:var(--on-70);margin-top:3px}
@@ -490,7 +493,7 @@ function injectStyleOnce() {
   @media (prefers-reduced-motion:reduce){#ucinpay-root *{transition:none!important}}
   @media (max-width:720px){
     #ucinpay-root .checkout{flex-direction:column;max-width:420px}
-    #ucinpay-root .brand{width:auto;padding:20px} #ucinpay-root .bamt{margin-top:16px;font-size:31px} #ucinpay-root .bspacer,#ucinpay-root .btrust,#ucinpay-root .bsecure{display:none}
+    #ucinpay-root .brand{width:auto;padding:20px} #ucinpay-root .bbadge{right:46px} #ucinpay-root .bamt{margin-top:16px;font-size:31px} #ucinpay-root .bspacer,#ucinpay-root .btrust,#ucinpay-root .bsecure{display:none}
     #ucinpay-root .body{flex-direction:column;min-height:0}
     #ucinpay-root .rail{width:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border);gap:4px;padding:9px 12px}
     #ucinpay-root .rlabel{display:none} #ucinpay-root .ritem{flex-direction:column;gap:5px;font-size:10.5px;padding:8px 12px;white-space:nowrap} #ucinpay-root .ritem.on::before{display:none} #ucinpay-root .ritem .tag{display:none}
