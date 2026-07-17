@@ -64,6 +64,11 @@ export interface SubmitConfig {
   itemCount: number
   /** Style/model id ('' = auto per step) — mirrors the desktop's UCIN_MODEL. */
   modelId?: string
+  /** Bring-your-own model: a HuggingFace repo id to run instead of the platform model. */
+  hfModel?: string
+  /** Token for a private/gated hfModel. Sent once over TLS; the backend encrypts it at
+   *  rest, isolates the job to a single-tenant node, and purges it after the run. */
+  hfToken?: string
   // SLA add-ons. They are PRICED into the client quote, so every one the user
   // toggles MUST reach the backend (which bills them) or quote != bill.
   privacy?: boolean     // isolated processing (+ one-time setup fee, single batch)
@@ -92,6 +97,10 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
     action_id: cfg.actionId,
     item_count: cfg.itemCount,
     security_mode: 'standard',
+    // Bring-your-own model: the repo id is non-secret; the token (private/gated repos) is
+    // sent once over TLS and the backend encrypts + isolates + purges it. Omitted when unset.
+    ...(cfg.hfModel ? { hf_model: cfg.hfModel } : {}),
+    ...(cfg.hfToken ? { hf_token: cfg.hfToken } : {}),
   }
 
   // 1. Resume-aware setup: reuse the checkpoint's key (so earlier ciphertext is

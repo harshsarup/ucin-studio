@@ -74,6 +74,8 @@ export function AppPage() {
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [speedId, setSpeedId] = useState<Tier>('flex')
   const [modelId, setModelId] = useState('')
+  const [hfModel, setHfModel] = useState('')   // bring-your-own HuggingFace model
+  const [hfToken, setHfToken] = useState('')   // token for a private/gated hf model
   const [toggles, setToggles] = useState<EventToggles>(NO_TOGGLES)
   const [files, setFiles] = useState<File[]>([])
   const [phase, setPhase] = useState<SubmitProgress | null>(null)
@@ -149,6 +151,9 @@ export function AppPage() {
           tier: speedId,
           itemCount: singleTask.count || files.length,
           modelId,
+          // Bring-your-own HuggingFace model (+ token for private/gated).
+          hfModel: hfModel.trim() || undefined,
+          hfToken: hfModel.trim() && hfToken.trim() ? hfToken.trim() : undefined,
           // Every add-on priced into the quote must reach the backend.
           privacy: toggles.privacy,
           guarantee: toggles.guarantee,
@@ -679,6 +684,38 @@ export function AppPage() {
                     {submitErr}
                     <div className="mt-0.5 text-fg-faint">Your uploaded files are saved — Resume picks up where it stopped.</div>
                   </div>
+                )}
+
+                {canBrowserSubmit && !result && actionId === 'text-to-image' && (
+                  <details className="mb-3 text-[13px]">
+                    <summary className="cursor-pointer select-none text-fg-subtle">
+                      Use your own model (HuggingFace)
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      <input
+                        className="ui-input w-full font-mono text-[13px]"
+                        value={hfModel}
+                        onChange={(e) => setHfModel(e.target.value)}
+                        placeholder="org/model — e.g. stabilityai/sdxl-turbo (empty = our default)"
+                      />
+                      {hfModel.trim() && (
+                        <>
+                          <input
+                            type="password"
+                            autoComplete="off"
+                            className="ui-input w-full font-mono text-[13px]"
+                            value={hfToken}
+                            onChange={(e) => setHfToken(e.target.value)}
+                            placeholder="hf_… token — only for a private or gated model"
+                          />
+                          <p className="text-[11px] text-fg-faint">
+                            Sent once over an encrypted connection, used only for your own
+                            isolated run, and discarded after. Public models need no token.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </details>
                 )}
 
                 {canBrowserSubmit && !result && (
