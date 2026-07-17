@@ -215,3 +215,48 @@ export async function putToStorage(grant: PresignedUpload, cipher: Blob): Promis
   const res = await fetch(grant.upload_url, { method: 'PUT', headers: grant.headers, body: cipher })
   if (!res.ok) throw new Error(`Upload failed (${res.status}) — check S3 CORS on the input bucket`)
 }
+
+// ── Outcome SLA delivery report (OUTCOME_SLA_SPEC.md §4) ─────────────────────
+
+export interface SlaClauseResult {
+  id: string
+  result: 'pass' | 'fail' | 'insufficient_evidence' | 'reported_only'
+  value?: unknown
+  margin?: unknown
+}
+
+export interface SlaReport {
+  sla_id: string
+  event_id: string
+  status: string
+  scorecard: {
+    delivered_at: string
+    input_frames: number | null
+    delivered_count: number | null
+    enhanced_count: number | null
+    clause_results: SlaClauseResult[]
+    failed_clauses: string[]
+    evidence_frames: number
+  } | null
+  invoice_lines: { label: string; amount_inr: number }[]
+  quoted_inr: number
+  promised_by: string | null
+  delivered_at: string | null
+  accepted: boolean
+  revisions: { included: number }
+  receipts_sha256: string | null
+}
+
+/** The delivery report for a shoot, by its event id (null → no SLA contract). */
+export async function slaReportByEvent(eventId: string): Promise<SlaReport | null> {
+  const { data } = await api.get<{ sla_id: string }[]>(`${C}/sla/contracts`, { params: { event_id: eventId } })
+  const sla = data[0]?.sla_id
+  if (!sla) return null
+  const { data: report } = await api.get<SlaReport>(`${C}/sla/contracts/${sla}/report`)
+  return report
+}
+
+export async function slaAccept(slaId: string): Promise<SlaReport> {
+  const { data } = await api.post<SlaReport>(`${C}/sla/contracts/${slaId}/accept`, {})
+  return data
+}
