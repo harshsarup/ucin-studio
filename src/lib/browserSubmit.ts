@@ -188,11 +188,8 @@ export async function submitBrowserJob(cfg: SubmitConfig, onProgress: (p: Submit
   }
 
   // 5. Seal: wrap the job key for the enclave + submit per-blob envelopes.
-  //    The backend enclave/attestation IS live (attestation.py): confidential
-  //    jobs won't get the data key released until a fresh NVIDIA-signed
-  //    attestation passes. Sealing is best-effort HERE only because a
-  //    non-confidential job doesn't require the wrapped-key envelope to run, so
-  //    a seal hiccup must not fail an otherwise-deployed job (mirrors desktop).
+  //    Best-effort — enclave infra is a placeholder today, so a seal failure
+  //    must not fail an otherwise-deployed job (mirrors the desktop).
   emit('sealing', 0, 1)
   try {
     const grant = await enclaveKey(deploy.job_id)

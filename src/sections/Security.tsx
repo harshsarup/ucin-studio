@@ -2,19 +2,12 @@ import { Reveal } from '@/components/Reveal'
 import { SecurityViz } from '@/components/SecurityViz'
 import { Lock, KeyRound, MapPin, FileSignature } from 'lucide-react'
 
-// Claims audited 2026-07-18 against the real architecture (webcrypto.ts +
-// attestation.py) — each is backed by shipped code:
-//   • AES-256-GCM per-blob, one key per job, ciphertext-only uploads (webcrypto.ts)
-//   • the AES key only ever leaves RSA-OAEP-wrapped for the GPU enclave; the
-//     control plane stores only the enclave's PUBLIC half (models.EnclaveKey)
-//   • Private tier = real NVIDIA CC-mode hardware attestation: the data key is
-//     NOT released until a fresh, NVIDIA-signed attestation verifies the GPU
-//     (attestation.require_fresh_attestation → 409); customer gets a signed cert.
+// NOTE: confirm each claim matches the real architecture before shipping.
 const POINTS = [
-  { icon: Lock, title: 'Encrypted on your device', desc: 'AES-256-GCM before anything is uploaded — the network only ever receives ciphertext, never your files in the clear.' },
-  { icon: KeyRound, title: 'Your key stays yours', desc: 'One key per job, minted on your device. It only ever leaves RSA-wrapped for the GPU that runs the work — we hold no copy that can unwrap your files.' },
-  { icon: MapPin, title: 'India-resident', desc: 'Stored and processed in India (Mumbai). Inputs are wiped after delivery.' },
-  { icon: FileSignature, title: 'Confidential compute', desc: 'Add Private and your job runs inside an NVIDIA-attested hardware enclave — the data-centre operator can’t read it, verified before your key is released, with a signed certificate.' },
+  { icon: Lock, title: 'Encrypted on your device', desc: 'AES-256 before anything leaves — only encrypted ciphertext is ever uploaded.' },
+  { icon: KeyRound, title: 'Your keys stay with you', desc: 'Encryption keys never leave your machine — your originals stay on your drive.' },
+  { icon: MapPin, title: 'India-resident data', desc: 'Processed and stored in-region, in isolation, and wiped on delivery.' },
+  { icon: FileSignature, title: 'NDA-ready', desc: 'Confidentiality and white-label built in — for your most sensitive clients.' },
 ]
 
 /** Security section — how the network protects client work, with a flow visual. */
@@ -25,13 +18,11 @@ export function Security() {
         <Reveal>
           <div className="eyebrow mb-5">Security</div>
           <h2 className="display" style={{ fontSize: 'clamp(2rem, 4.6vw, 3.6rem)' }}>
-            The network only ever <span className="text-grad">sees ciphertext.</span>
+            Your originals never <span className="text-grad">leave your machine.</span>
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-fg-muted max-w-md">
-            Your files are encrypted on your device with AES-256 before anything is uploaded —
-            the key stays yours, processing runs on India-resident hardware, and inputs are wiped
-            after delivery. Choose Private and the work runs inside an NVIDIA-attested hardware
-            enclave the operator can&apos;t read.
+            Work is encrypted on your device before it&apos;s ever uploaded. The network runs on
+            ciphertext it processes in isolation — then wipes on delivery.
           </p>
           <div className="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-6">
             {POINTS.map((p) => (
