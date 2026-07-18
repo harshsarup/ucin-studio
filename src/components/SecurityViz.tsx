@@ -2,9 +2,10 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { HardDrive, KeyRound, Cpu, Lock } from 'lucide-react'
 
 /**
- * Security flow: originals + keys stay on the device; only encrypted ciphertext
- * travels to the network, which processes in isolation and wipes on delivery.
- * NOTE: verify the exact claims match the real architecture before shipping.
+ * Security flow (matches webcrypto.ts + attestation.py): the AES-256 job key is
+ * minted on the device and only ever leaves RSA-wrapped for the enclave; only
+ * ciphertext travels to the network, which — on the Private tier — runs it inside
+ * an NVIDIA-attested hardware enclave and wipes inputs on delivery.
  */
 export function SecurityViz() {
   const reduced = useReducedMotion()
@@ -17,8 +18,8 @@ export function SecurityViz() {
         <div className="flex-1 rounded-2xl border bg-canvas-card p-4 text-center" style={{ borderColor: 'var(--border)', boxShadow: '0 24px 55px -28px var(--shadow)' }}>
           <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'var(--tint)' }}><HardDrive size={18} className="text-accent" /></span>
           <div className="mt-2.5 text-[13px] font-semibold text-fg">Your device</div>
-          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><KeyRound size={11} className="text-accent" /> Originals stay here</div>
-          <div className="mt-1 mono text-[9px] uppercase tracking-[0.1em] text-fg-faint">Originals never leave</div>
+          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><KeyRound size={11} className="text-accent" /> Key stays here</div>
+          <div className="mt-1 mono text-[9px] uppercase tracking-[0.1em] text-fg-faint">AES-256 · encrypted on device</div>
         </div>
 
         {/* encrypted transit */}
@@ -40,14 +41,14 @@ export function SecurityViz() {
         <div className="flex-1 rounded-2xl border bg-canvas-card p-4 text-center" style={{ borderColor: 'var(--border)', boxShadow: '0 24px 55px -28px var(--shadow)' }}>
           <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'var(--tint)' }}><Cpu size={18} className="text-accent" /></span>
           <div className="mt-2.5 text-[13px] font-semibold text-fg">UCIN network</div>
-          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><Lock size={11} className="text-accent" /> Encrypted only</div>
-          <div className="mt-1 mono text-[9px] uppercase tracking-[0.1em] text-fg-faint">Isolated · wiped on delivery</div>
+          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><Lock size={11} className="text-accent" /> Ciphertext only</div>
+          <div className="mt-1 mono text-[9px] uppercase tracking-[0.1em] text-fg-faint">Enclave-attested · wiped on delivery</div>
         </div>
       </div>
 
       <div className="relative z-10 mt-5 text-center">
-        <div className="mono text-[11px] uppercase tracking-[0.14em] text-fg-subtle">Encrypted before it ever leaves</div>
-        <div className="mono text-[10px] uppercase tracking-[0.12em] text-fg-faint mt-1.5">Your full-res originals never leave your device</div>
+        <div className="mono text-[11px] uppercase tracking-[0.14em] text-fg-subtle">AES-256 · encrypted before it ever leaves</div>
+        <div className="mono text-[10px] uppercase tracking-[0.12em] text-fg-faint mt-1.5">Your key only unwraps inside the attested enclave</div>
       </div>
     </div>
   )
