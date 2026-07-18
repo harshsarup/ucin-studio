@@ -14,6 +14,7 @@ import {
   presetsFor, defaultCounts, quoteEvent, modelsFor,
   usesDials, defaultDials, dialsToLines, type OutcomeDials,
   SLA_DELIVERED_BANDS, SLA_DELIVERED_TOLERANCE_PCT, SLA_SMALL_SHOOT_MAX, SLA_BAND_LABELS,
+  modulesQuote, SLA_BUNDLE_RATES, SLA_HERO_PACKS, SLA_INCLUDED_REDOS,
 } from '@/lib/catalog'
 import { checkBatch, fmtBytes, DESKTOP_INSTALL_CMD } from '@/lib/batch'
 import { submitBrowserJob, BROWSER_ACTIONS, type SubmitProgress } from '@/lib/browserSubmit'
@@ -159,6 +160,24 @@ export function AppPage() {
   const speed = SPEED_TIERS.find((s) => s.id === speedId)!
   // Style/model only matters when a model-driven step is in the plan.
   const modelDriven = lines.some((l) => l.count > 0 && ['grade', 'enhance', 'generate'].includes(l.taskId))
+
+  // ── v2 MODULE mode: one final charge, judgment execution — the default for
+  // presets with a bundle rate. Dials survive behind the Advanced override.
+  const moduleCapable = !!preset && SLA_BUNDLE_RATES[preset.id] != null
+  const [targetOverride, setTargetOverride] = useState(false)
+  const moduleMode = moduleCapable && !targetOverride
+  const [enhanceOn, setEnhanceOn] = useState(true)
+  const [heroPack, setHeroPack] = useState(0)
+  useEffect(() => {
+    setHeroPack(preset?.id === 'wedding-full' ? 30 : 0)
+    setEnhanceOn(preset?.id !== 'sneak-peek')
+    setTargetOverride(false)
+  }, [presetId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const heroPackApplies = preset?.id !== 'portraits'
+  const mQuote = moduleMode && totalItems > 0
+    ? modulesQuote(preset!.id, totalItems, { enhance: enhanceOn, heroPack: heroPackApplies ? heroPack : 0 }, speedId, toggles)
+    : null
+  const totalShownInr = mQuote?.totalInr ?? quote.totalInr
 
   // ── Browser submission: small single-step batches only; the rest → desktop ──
   const batch = checkBatch(files)
@@ -479,7 +498,44 @@ export function AppPage() {
               </Field>
             )}
 
-            {totalItems > 0 && dialMode && dials ? (
+            {totalItems > 0 && moduleMode && mQuote ? (
+              <Field
+                label="Your job"
+                hint={`We cull all ${totalItems.toLocaleString('en-IN')} by judgment — keep the good, drop the bad — and finish every keeper in your style. ${SLA_INCLUDED_REDOS} redos included.`}
+              >
+                <div className="space-y-2.5">
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-canvas-border px-3 py-2.5">
+                    <div className="min-w-0">
+                      <div className="text-[14px] text-fg">Enhance & upscale where needed</div>
+                      <div className="text-[12px] text-fg-faint">Any finished photo below the quality floor gets fixed — receipts show which and why.</div>
+                    </div>
+                    <input type="checkbox" className="h-4 w-4 accent-[var(--accent)]"
+                      checked={enhanceOn} onChange={(e) => setEnhanceOn(e.target.checked)} />
+                  </label>
+                  {heroPackApplies && (
+                    <div className="rounded-lg border border-canvas-border px-3 py-2.5">
+                      <div className="text-[14px] text-fg">Hero retouch pack</div>
+                      <div className="text-[12px] text-fg-faint">Full skin & cleanup on your showcase shots — the AI picks the best by score.</div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {[0, ...Object.keys(SLA_HERO_PACKS).map(Number)].map((p) => (
+                          <button key={p} type="button" onClick={() => setHeroPack(p)}
+                            className="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
+                            style={heroPack === p
+                              ? { borderColor: 'var(--accent)', background: 'var(--tint)', color: 'var(--accent)' }
+                              : { borderColor: 'var(--border)', color: 'var(--fg-subtle)' }}>
+                            {p === 0 ? 'None' : `×${p} · ${fmtINR(SLA_HERO_PACKS[p])}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button type="button" onClick={() => setTargetOverride(true)}
+                    className="px-1 text-[12px] text-fg-faint underline-offset-2 hover:text-fg hover:underline">
+                    Advanced: I owe my client a specific gallery size
+                  </button>
+                </div>
+              </Field>
+            ) : totalItems > 0 && dialMode && dials ? (
               <Field
                 label="Your gallery"
                 hint={
@@ -688,14 +744,25 @@ export function AppPage() {
             <div className="eyebrow mb-4">Your quote</div>
 
             <div className="display text-fg" style={{ fontSize: 'clamp(2.4rem, 5vw, 3.4rem)' }}>
-              {fmtINR(quote.totalInr)}
+              {fmtINR(totalShownInr)}
             </div>
             <p className="mt-1 text-[14px] text-fg-subtle">
               {speed.label} · {speed.promise.toLowerCase()}
+              {moduleMode && mQuote ? ` · one charge, final · ${SLA_INCLUDED_REDOS} redos included` : ''}
             </p>
 
             <div className="mt-6 space-y-1.5">
-              {quote.lines.length === 0 ? (
+              {moduleMode && mQuote ? (
+                /* v2 modules: the invoice is DELIVERABLES, not step usage. */
+                <>
+                  {mQuote.lines.map((l, i) => (
+                    <div key={i} className="flex items-center justify-between gap-3 text-[14px]">
+                      <span className="min-w-0 text-fg-muted">{l.label}</span>
+                      <span className="shrink-0 text-fg">{l.amountInr > 0 ? fmtINR(l.amountInr) : ''}</span>
+                    </div>
+                  ))}
+                </>
+              ) : quote.lines.length === 0 ? (
                 <p className="py-6 text-center text-[14px] text-fg-subtle">
                   Pick a preset and enter how many to see the price.
                 </p>

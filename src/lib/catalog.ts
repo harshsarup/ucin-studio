@@ -203,6 +203,71 @@ export const SLA_BAND_LABELS: Record<number, string> = {
   0.25: 'Generous',
 }
 
+// ── Outcome SLA v2 — MODULE pricing (OUTCOME_SLA_V2_MODULES.md) ───────────────
+// ONE final charge from checkout-known numbers. The AI culls by judgment (no
+// target), grades every keeper, enhances need-based. MIRRORS models.py SLA_*
+// v2 constants — 3-way drift guard.
+
+/** Base job ₹/input frame per preset (cull by judgment + grade every keeper). */
+export const SLA_BUNDLE_RATES: Record<string, number> = {
+  'wedding-full': 2.20, 'event-highlights': 2.20, 'sneak-peek': 1.25, 'portraits': 5.90,
+}
+/** Enhance & upscale module — need-based inside, flat per input frame outside. */
+export const SLA_ENHANCE_MODULE_PER_FRAME = 0.40
+/** Hero retouch packs — the one count a customer chooses. */
+export const SLA_HERO_PACKS: Record<number, number> = { 10: 300, 30: 900, 60: 1800 }
+/** Minimum event price per tier (small-shoot floor: GPU minimums + fees). */
+export const SLA_MIN_EVENT_INR: Record<Tier, number> = { flex: 299, core: 549, priority: 999 }
+/** Editing freedom: included redos per event (mirrors STUDIO_FREE_REDOS_PER_EVENT). */
+export const SLA_INCLUDED_REDOS = 5
+
+export interface ModulesSelection {
+  enhance: boolean
+  heroPack: number          // 0 | 10 | 30 | 60
+}
+
+export interface ModulesQuote {
+  totalInr: number
+  floorApplied: boolean
+  lines: { label: string; amountInr: number }[]
+}
+
+/** Client twin of the server's _modules_price — must match to the paisa
+ *  (same shape as v1: base fee + subtotal×mult + %toggles(post-mult) + flats,
+ *  then the tier floor). */
+export function modulesQuote(
+  presetId: string, inputCount: number, sel: ModulesSelection,
+  speedId: Tier, toggles: EventToggles,
+): ModulesQuote | null {
+  const rate = SLA_BUNDLE_RATES[presetId]
+  if (rate == null || inputCount <= 0) return null
+  const r2 = (x: number): number => Math.round(x * 100) / 100
+  const speed = speedTier(speedId)
+  const bundle = r2(rate * inputCount)
+  const enh = sel.enhance ? r2(SLA_ENHANCE_MODULE_PER_FRAME * inputCount) : 0
+  const hero = sel.heroPack ? (SLA_HERO_PACKS[sel.heroPack] ?? 0) : 0
+  const subtotal = r2((bundle + enh + hero) * speed.multiplier)
+  let pct = 0
+  if (toggles.privacy) pct += 0.40
+  if (toggles.guarantee) pct += 0.15
+  const flat = (toggles.whitelabel ? 299 : 0) + (toggles.privacy ? CONFIDENTIAL_SETUP_INR : 0)
+  let total = r2(speed.baseFeeInr + subtotal + r2(subtotal * pct) + flat)
+  const floor = SLA_MIN_EVENT_INR[speedId] ?? 0
+  const floorApplied = total < floor
+  if (floorApplied) total = floor
+
+  const enhAlloc = sel.enhance ? r2(enh * speed.multiplier) : 0
+  const heroAlloc = sel.heroPack ? r2(hero * speed.multiplier) : 0
+  const lines: ModulesQuote['lines'] = [{
+    label: `Finished gallery — your ${inputCount.toLocaleString('en-IN')}-frame take, culled by judgment & graded in your style · ${speed.label}`,
+    amountInr: r2(total - enhAlloc - heroAlloc),
+  }]
+  if (sel.enhance) lines.push({ label: 'Enhance & upscale — every finished photo below the quality floor, fixed', amountInr: enhAlloc })
+  if (sel.heroPack) lines.push({ label: `Hero retouch pack ×${sel.heroPack}`, amountInr: heroAlloc })
+  if (floorApplied) lines.push({ label: 'Small-shoot minimum applied', amountInr: 0 })
+  return { totalInr: total, floorApplied, lines }
+}
+
 /**
  * The dial → step-count derivation (parity twin of the server's
  * _dials_to_batch_plan): cull runs on everything, grade on the delivered set,
