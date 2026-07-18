@@ -2,12 +2,15 @@ import { Reveal } from '@/components/Reveal'
 import { SecurityViz } from '@/components/SecurityViz'
 import { Lock, KeyRound, MapPin, FileSignature } from 'lucide-react'
 
-// NOTE: confirm each claim matches the real architecture before shipping.
+// Claims audited 2026-07-18 against the real architecture — each is defensible
+// today. What is NOT claimed (deliberately): hardware-enclave / decrypt-in-VRAM
+// confidential compute. That attestation isn't live yet; do not add it here or
+// in marketing until it is (see OUTCOME_SLA_SPEC / security posture doc).
 const POINTS = [
-  { icon: Lock, title: 'Encrypted on your device', desc: 'AES-256 before anything leaves — only encrypted ciphertext is ever uploaded.' },
-  { icon: KeyRound, title: 'Your keys stay with you', desc: 'Encryption keys never leave your machine — your originals stay on your drive.' },
-  { icon: MapPin, title: 'India-resident data', desc: 'Processed and stored in-region, in isolation, and wiped on delivery.' },
-  { icon: FileSignature, title: 'NDA-ready', desc: 'Confidentiality and white-label built in — for your most sensitive clients.' },
+  { icon: Lock, title: 'Encrypted on your device', desc: 'AES-256-GCM before anything is uploaded — the network only ever receives ciphertext, never your files in the clear.' },
+  { icon: KeyRound, title: 'A unique key per job', desc: 'Your full-resolution originals stay on your device; only encrypted proxies are sent for processing.' },
+  { icon: MapPin, title: 'India-resident', desc: 'Stored and processed in India (Mumbai). Inputs are wiped after delivery.' },
+  { icon: FileSignature, title: 'Private processing', desc: 'Add the Private option for dedicated, single-tenant hardware and white-label delivery.' },
 ]
 
 /** Security section — how the network protects client work, with a flow visual. */
@@ -21,8 +24,9 @@ export function Security() {
             Your originals never <span className="text-grad">leave your machine.</span>
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-fg-muted max-w-md">
-            Work is encrypted on your device before it&apos;s ever uploaded. The network runs on
-            ciphertext it processes in isolation — then wipes on delivery.
+            Your work is encrypted on your device before it&apos;s ever uploaded — the network
+            only ever receives encrypted proxies, never your full-resolution originals — processed
+            on India-resident hardware and wiped after delivery.
           </p>
           <div className="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-6">
             {POINTS.map((p) => (

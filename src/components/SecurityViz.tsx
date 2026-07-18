@@ -17,7 +17,7 @@ export function SecurityViz() {
         <div className="flex-1 rounded-2xl border bg-canvas-card p-4 text-center" style={{ borderColor: 'var(--border)', boxShadow: '0 24px 55px -28px var(--shadow)' }}>
           <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'var(--tint)' }}><HardDrive size={18} className="text-accent" /></span>
           <div className="mt-2.5 text-[13px] font-semibold text-fg">Your device</div>
-          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><KeyRound size={11} className="text-accent" /> Key stays here</div>
+          <div className="mt-2 inline-flex items-center gap-1.5 mono text-[9px] uppercase tracking-[0.1em] text-fg-subtle"><KeyRound size={11} className="text-accent" /> Originals stay here</div>
           <div className="mt-1 mono text-[9px] uppercase tracking-[0.1em] text-fg-faint">Originals never leave</div>
         </div>
 
@@ -47,7 +47,7 @@ export function SecurityViz() {
 
       <div className="relative z-10 mt-5 text-center">
         <div className="mono text-[11px] uppercase tracking-[0.14em] text-fg-subtle">Encrypted before it ever leaves</div>
-        <div className="mono text-[10px] uppercase tracking-[0.12em] text-fg-faint mt-1.5">Your keys, your originals — they stay with you</div>
+        <div className="mono text-[10px] uppercase tracking-[0.12em] text-fg-faint mt-1.5">Your full-res originals never leave your device</div>
       </div>
     </div>
   )
