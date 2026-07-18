@@ -169,7 +169,7 @@ export function AppPage() {
   const [enhanceOn, setEnhanceOn] = useState(true)
   const [heroPack, setHeroPack] = useState(0)
   useEffect(() => {
-    setHeroPack(preset?.id === 'wedding-full' ? 30 : 0)
+    setHeroPack(0)   // opt-in add-on — never default a ₹900 line onto a small shoot
     setEnhanceOn(preset?.id !== 'sneak-peek')
     setTargetOverride(false)
   }, [presetId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -498,6 +498,19 @@ export function AppPage() {
               </Field>
             )}
 
+            {totalItems > 0 && moduleCapable && (
+              <Field label="How many photos do you want back?">
+                <select
+                  className={inputCls}
+                  value={targetOverride ? 'target' : 'judgment'}
+                  onChange={(e) => setTargetOverride(e.target.value === 'target')}
+                >
+                  <option value="judgment">Let the AI decide — keep every good frame (recommended)</option>
+                  <option value="target">I owe my client a specific gallery size</option>
+                </select>
+              </Field>
+            )}
+
             {totalItems > 0 && moduleMode && mQuote ? (
               <Field
                 label="Your job"
@@ -529,10 +542,6 @@ export function AppPage() {
                       </div>
                     </div>
                   )}
-                  <button type="button" onClick={() => setTargetOverride(true)}
-                    className="px-1 text-[12px] text-fg-faint underline-offset-2 hover:text-fg hover:underline">
-                    Advanced: I owe my client a specific gallery size
-                  </button>
                 </div>
               </Field>
             ) : totalItems > 0 && dialMode && dials ? (
@@ -694,7 +703,10 @@ export function AppPage() {
             </Field>
             )}
 
-            <Field label="When do you need it?">
+            <Field
+              label="How fast do you need it?"
+              hint="This is your delivery promise — the clock starts when you pay. Miss it and you're credited automatically (add the deadline guarantee for a stronger remedy)."
+            >
               <div className="grid grid-cols-3 gap-2">
                 {SPEED_TIERS.map((s) => (
                   <button
