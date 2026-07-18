@@ -216,8 +216,10 @@ export const SLA_BUNDLE_RATES: Record<string, number> = {
 export const SLA_ENHANCE_MODULE_PER_FRAME = 0.40
 /** Hero retouch packs — the one count a customer chooses. */
 export const SLA_HERO_PACKS: Record<number, number> = { 10: 300, 30: 900, 60: 1800 }
-/** Minimum event price per tier (small-shoot floor: GPU minimums + fees). */
-export const SLA_MIN_EVENT_INR: Record<Tier, number> = { flex: 299, core: 549, priority: 999 }
+/** Token minimum event price per tier — providers bill per MINUTE, so the
+ *  per-frame rate + base fee already covers small jobs profitably. This only
+ *  guards payment fees / micro-ticket abuse: testing stays under ₹50. */
+export const SLA_MIN_EVENT_INR: Record<Tier, number> = { flex: 49, core: 99, priority: 199 }
 /** Editing freedom: included redos per event (mirrors STUDIO_FREE_REDOS_PER_EVENT). */
 export const SLA_INCLUDED_REDOS = 5
 
