@@ -142,9 +142,10 @@ export async function getJob(jobId: string): Promise<JobStatus> {
 // ── Studio per-event checkout (one-off Cashfree order → run) ─────────────────
 import { openCashfreeCheckout } from '@/lib/cashfreeCheckout'
 
-// Custom-branded Cashfree Elements checkout (the approved design). OFF until sandbox-verified;
-// the hosted `_modal` checkout is the fallback so an unverified Elements path can't break payments.
-// TEMPORARILY ON for sandbox verification — revert to false before shipping if the two VERIFY spots fail.
+// Custom-branded Cashfree Elements checkout (the approved design) — the SHIPPED path.
+// Component wiring audited against Cashfree's Element docs + pg-svelte wrapper (2026-07);
+// the hosted `_modal` checkout below stays as a one-flag kill switch if the branded
+// modal ever misbehaves in the field.
 const CUSTOM_CHECKOUT = true
 
 interface StudioOrder { order_id: string; payment_session_id: string; env: 'sandbox' | 'production'; amount_inr: number }

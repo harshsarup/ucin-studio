@@ -51,6 +51,9 @@ export function Pay() {
       merchant: params.get('merchant') || 'UCIN Studio',
       subtitle: params.get('subtitle') || 'Creative studio · pay per job',
       note: params.get('note') || 'Fixed — never billed above',
+      // Redirect rails (netbanking/wallet) leave the page for bank auth and can't
+      // resolve the promise — land them on the same sentinel the app window watches.
+      returnUrl: SUCCESS,
     })
       .then((r) => {
         window.location.href = r === 'success' ? SUCCESS : CANCEL

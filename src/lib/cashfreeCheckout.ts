@@ -15,7 +15,15 @@
  *   • card <input>s → Cashfree Elements iframes (PCI); they render inside the same .control.
  *   • the decorative QR is only shown if a REAL Cashfree UPI QR is obtained (never a fake one).
  *
- * ⚠️ NOT yet verified against a live payment. Every Cashfree API call is flagged `VERIFY:`.
+ * SDK contract (verified against Cashfree's Element docs + their pg-svelte wrapper, 2026-07):
+ * `cashfree.pay({ paymentMethod })` takes a COMPONENT REFERENCE created via `cashfree.create()`
+ * — never an object literal (that shape belongs to the server-side Order-Pay REST API). So every
+ * rail here builds its component first: card = the mounted cardNumber group, UPI collect = a
+ * mounted `upiCollect` element, QR = a mounted `upiQr`, and netbanking/wallet = value-complete
+ * components mounted into an off-screen slot (mounting is what registers them with the SDK).
+ * `redirect: 'if_required'` keeps card/UPI in-page; netbanking/wallets redirect to the bank and
+ * land on `returnUrl` (callers that run in a disposable window pass their sentinel; in-page
+ * callers omit it and Cashfree uses the order's return_url).
  */
 
 const SDK_SRC = 'https://sdk.cashfree.com/js/v3/cashfree.js'
@@ -24,6 +32,8 @@ export interface CheckoutOpts {
   mode: 'sandbox' | 'production'
   paymentSessionId: string
   amountInr: number
+  returnUrl?: string                             // where redirect rails (netbanking/wallet) land after
+                                                 // auth; omit in-page → the order's return_url applies
   merchant?: string                              // sidebar title, default "UCIN Studio"
   subtitle?: string                              // under the title, e.g. "Creative studio · pay per job"
   note?: string                                  // the green badge, e.g. "Fixed — never billed above"
@@ -31,6 +41,19 @@ export interface CheckoutOpts {
   lines?: { label: string; value: string }[]     // order-summary rows; omitted → card hidden
 }
 export type CheckoutResult = 'success' | 'cancelled' | 'failed'
+
+// Mulish — the typeface Razorpay's own site/checkout uses. Loaded once from Google
+// Fonts; if a page CSP blocks it, the stack falls back to system-ui with no layout shift.
+let fontLoaded = false
+function loadFontOnce() {
+  if (fontLoaded || typeof document === 'undefined') return
+  fontLoaded = true
+  const pre1 = document.createElement('link'); pre1.rel = 'preconnect'; pre1.href = 'https://fonts.googleapis.com'
+  const pre2 = document.createElement('link'); pre2.rel = 'preconnect'; pre2.href = 'https://fonts.gstatic.com'; pre2.crossOrigin = 'anonymous'
+  const css = document.createElement('link'); css.rel = 'stylesheet'
+  css.href = 'https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap'
+  document.head.append(pre1, pre2, css)
+}
 
 let sdkPromise: Promise<void> | null = null
 function loadSdk(): Promise<void> {
@@ -107,9 +130,10 @@ function elementStyle(root: HTMLElement) {
   return {
     base: {
       color: v('--fg', '#0D0F14'),
-      fontSize: '13.5px',
-      fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
-      letterSpacing: '.01em',
+      fontSize: '14px',
+      fontFamily: '"Mulish", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontVariantNumeric: 'tabular-nums',
+      letterSpacing: '0',
       '::placeholder': { color: v('--fg-faint', '#9096A0') },
     },
     invalid: { color: v('--danger', '#C0392B') },
@@ -124,6 +148,7 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
     let host: HTMLDivElement | null = null
     function teardown() { if (host && host.parentNode) host.parentNode.removeChild(host) }
 
+    loadFontOnce()
     try {
       await loadSdk()
     } catch {
@@ -178,8 +203,51 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
       b.classList.add('sel')
     }))
 
-    // ── Card via Cashfree Elements (mounted into the artifact's .control boxes) ──
+    // ── Cashfree payment plumbing (component-based; see header) ─────────────────
     const style = elementStyle(root)
+
+    /** pay() with the shared session/redirect options. `paymentMethod` MUST be a component. */
+    const payWith = (component: any) => cashfree.pay({
+      paymentMethod: component,
+      paymentSessionId: opts.paymentSessionId,
+      redirect: 'if_required',
+      ...(opts.returnUrl ? { returnUrl: opts.returnUrl } : {}),
+    })
+
+    /** Wait for a freshly-mounted component to report ready (bounded — never blocks a pay). */
+    const whenReady = (component: any) => new Promise<void>((res) => {
+      let settled2 = false
+      const go = () => { if (!settled2) { settled2 = true; res() } }
+      try { component.on('ready', go) } catch { go() }
+      setTimeout(go, 2500)
+    })
+
+    /** Per-pane inline error line (silent failures are unacceptable on a payment screen). */
+    const showErr = (pane: string, msg: string) => { const el = $(`#${pane} .payerr`); if (el) { el.textContent = msg; el.classList.add('on') } }
+    const clearErr = (pane: string) => { const el = $(`#${pane} .payerr`); if (el) el.classList.remove('on') }
+    const errMsg = (res: any) => {
+      const raw = (res && res.error && (res.error.message || res.error.description)) || ''
+      // Cashfree returns "mode not enabled for merchant:paymentCode …" when the account
+      // hasn't enabled that method — a dashboard setting, not the payer's fault.
+      if (/not enabled/i.test(raw)) return 'This payment method isn’t available right now. Please use UPI, or pick another method.'
+      return raw || 'Payment didn’t go through. Try again or pick another method.'
+    }
+
+    /**
+     * Resolve one cashfree.pay() outcome. The SDK returns one of three shapes and they must
+     * NOT be collapsed: {error} → show it and let the user retry; {redirect} → the SDK is
+     * sending the payer to bank/OTP auth (cards need 3-D Secure by RBI mandate, netbanking &
+     * wallets always redirect) and will return via returnUrl, so the modal must STAY (tearing
+     * it down here abandons the payment — that was the "card checkout just disappears" bug);
+     * otherwise the payment completed in-page and we close on success.
+     */
+    const settlePay = (res: any, pane: string, resetBtn: () => void) => {
+      if (res && res.error) { showErr(pane, errMsg(res)); resetBtn(); return }
+      if (res && res.redirect) return   // navigating to bank/OTP; leave the modal for the redirect
+      done('success')                   // in-page completion (paymentDetails / no redirect needed)
+    }
+
+    // ── Card via Cashfree Elements (mounted into the artifact's .control boxes) ──
     let cardNumber: any
     let elementsOk = false
     try {
@@ -201,31 +269,36 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
 
     const busy = (btn: HTMLButtonElement, on: boolean, label: string) => { btn.disabled = on; btn.textContent = on ? 'Processing…' : label }
 
-    // Card pay
+    // Card pay — the cardNumber component references the whole group; all four must be complete.
     const payCard = $('#cards .paybtn') as HTMLButtonElement
     payCard?.addEventListener('click', async () => {
       if (!elementsOk) return
       const label = 'Pay ' + rupee(opts.amountInr)
-      busy(payCard, true, label)
+      clearErr('cards'); busy(payCard, true, label)
       try {
-        // Cashfree docs: pass the card component group (cardNumber); all four must be complete.
-        const res = await cashfree.pay({ paymentMethod: cardNumber, paymentSessionId: opts.paymentSessionId })
-        if (res && res.error) { busy(payCard, false, label); return }
-        done('success')
-      } catch { busy(payCard, false, label) }
+        const res = await payWith(cardNumber)
+        settlePay(res, 'cards', () => busy(payCard, false, label))
+      } catch { showErr('cards', 'Payment didn’t go through. Check the card details and try again.'); busy(payCard, false, label) }
     })
 
-    // UPI collect (VPA) — per Cashfree docs: paymentMethod { upi: { upiId } }.
+    // UPI collect (VPA) — a mounted `upiCollect` element (cross-origin input, like the card
+    // fields); its component reference is the paymentMethod.
+    let upiCollect: any = null
+    try {
+      upiCollect = cashfree.create('upiCollect', { style })
+      upiCollect.mount('#upi-vpa')
+      try { upiCollect.on('focus', () => $('#upi-vpa')?.classList.add('foc')); upiCollect.on('blur', () => $('#upi-vpa')?.classList.remove('foc')) } catch { /* event name differs */ }
+    } catch {
+      const row = $('#upi .upiid'); if (row) row.innerHTML = '<p class="soon">UPI ID entry is unavailable right now — scan the QR instead.</p>'
+    }
     const payUpi = $('.verify') as HTMLButtonElement
     payUpi?.addEventListener('click', async () => {
-      const vpa = ($('#upi .upiid .control input') as HTMLInputElement).value.trim()
-      if (!vpa) return
-      busy(payUpi, true, 'Verify & pay')
+      if (!upiCollect) return
+      clearErr('upi'); busy(payUpi, true, 'Verify & pay')
       try {
-        const res = await cashfree.pay({ paymentMethod: { upi: { upiId: vpa } }, paymentSessionId: opts.paymentSessionId })
-        if (res && res.error) { busy(payUpi, false, 'Verify & pay'); return }
-        done('success')
-      } catch { busy(payUpi, false, 'Verify & pay') }
+        const res = await payWith(upiCollect)
+        settlePay(res, 'upi', () => busy(payUpi, false, 'Verify & pay'))
+      } catch { showErr('upi', 'That UPI ID didn’t work. Check it and try again.'); busy(payUpi, false, 'Verify & pay') }
     })
 
     // Real UPI QR — Cashfree's `upiQr` component renders a genuine scannable code, then
@@ -234,31 +307,37 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
       const qr = cashfree.create('upiQr', { values: { size: '150px' } })
       const slot = $('#upi-qr'); if (slot) slot.innerHTML = ''
       qr.mount('#upi-qr')
-      cashfree.pay({ paymentMethod: qr, paymentSessionId: opts.paymentSessionId })
-        .then((res: any) => { if (res && !res.error) done('success') })
-        .catch(() => { /* user paid another way, or QR unused */ })
+      // pay() on an unready QR component rejects instantly and the scan listener never
+      // starts — wait for the atom to report ready before arming it.
+      whenReady(qr).then(() => payWith(qr)
+        .then((res: any) => { if (res && !res.error && !res.redirect) done('success') })
+        .catch(() => { /* user paid another way, or QR unused */ }))
     } catch {
       const qw = $('#upi .qrwrap'); if (qw) qw.classList.add('noqr')
     }
 
-    // Net Banking — bank is chosen on OUR UI; cashfree.pay() then redirects to that
-    // bank's login for auth (unavoidable for the netbanking rail, and acceptable).
+    // Net Banking — bank is chosen on OUR UI, then a value-complete `netbanking` component is
+    // built and mounted off-screen (mounting registers it with the SDK; its rendered button is
+    // never shown). cashfree.pay() then redirects to the bank's login for auth.
     const payNb = $('#nb .paybtn') as HTMLButtonElement
     payNb?.addEventListener('click', async () => {
       const chosen = $('#nb .opt.sel') as HTMLElement | null
       const code = chosen?.getAttribute('data-code') || ''
       const label = payNb.textContent || 'Continue'
-      if (!code) { /* code not yet filled from Cashfree's bank-code list */ return }
-      busy(payNb, true, label)
+      if (!code) return
+      clearErr('nb'); busy(payNb, true, label)
       try {
-        // Cashfree docs: paymentMethod { netbanking: { netbankingBankName: "HDFCR" } }.
-        const res = await cashfree.pay({ paymentMethod: { netbanking: { netbankingBankName: code } }, paymentSessionId: opts.paymentSessionId })
-        if (res && res.error) { busy(payNb, false, label); return }
-        done('success')
-      } catch { busy(payNb, false, label) }
+        const slot = $('#nb-slot'); if (slot) slot.innerHTML = ''
+        const nb = cashfree.create('netbanking', { values: { netbankingBankName: code } })
+        nb.mount('#nb-slot')
+        await whenReady(nb)
+        const res = await payWith(nb)
+        settlePay(res, 'nb', () => busy(payNb, false, label))
+      } catch { showErr('nb', 'Could not start the bank payment. Try again or pick another method.'); busy(payNb, false, label) }
     })
 
-    // Wallets — wallet is chosen on OUR UI; cashfree.pay() routes to it.
+    // Wallets — provider + phone are collected on OUR UI, then a value-complete `wallet`
+    // component (mounted off-screen, same as netbanking) is paid; Cashfree routes to the wallet.
     const payWallet = $('#wallet .paybtn') as HTMLButtonElement
     payWallet?.addEventListener('click', async () => {
       const chosen = $('#wallet .wopt.sel') as HTMLElement | null
@@ -267,13 +346,15 @@ export function openCashfreeCheckout(opts: CheckoutOpts): Promise<CheckoutResult
       const label = payWallet.textContent || 'Continue'
       if (!provider) return
       if (!/^\d{10}$/.test(phone)) { ($('#wallet .wphone') as HTMLInputElement)?.focus(); return }
-      busy(payWallet, true, label)
+      clearErr('wallet'); busy(payWallet, true, label)
       try {
-        // Cashfree docs: paymentMethod { wallet: { provider, phone } } (10-digit phone required).
-        const res = await cashfree.pay({ paymentMethod: { wallet: { provider, phone } }, paymentSessionId: opts.paymentSessionId })
-        if (res && res.error) { busy(payWallet, false, label); return }
-        done('success')
-      } catch { busy(payWallet, false, label) }
+        const slot = $('#wallet-slot'); if (slot) slot.innerHTML = ''
+        const w = cashfree.create('wallet', { values: { provider, phone } })
+        w.mount('#wallet-slot')
+        await whenReady(w)
+        const res = await payWith(w)
+        settlePay(res, 'wallet', () => busy(payWallet, false, label))
+      } catch { showErr('wallet', 'Could not reach the wallet provider. Try again or pick another method.'); busy(payWallet, false, label) }
     })
   })
 }
@@ -340,7 +421,8 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
                   <div class="qrside"><div class="t">Scan &amp; pay ${amt}</div><div class="s">Open <b>GPay, PhonePe, Paytm</b> or any UPI app and scan this code.</div></div>
                 </div>
                 <div class="orline">or enter UPI ID</div>
-                <div class="upiid"><div class="control"><input placeholder="yourname@upi" aria-label="UPI ID"></div><button class="verify" type="button">Verify &amp; pay</button></div>
+                <div class="upiid"><div class="control" id="upi-vpa" aria-label="UPI ID"></div><button class="verify" type="button">Verify &amp; pay</button></div>
+                <p class="payerr" role="alert"></p>
               </div>
             </div>
 
@@ -355,6 +437,7 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
                 <div class="field"><label>Name on card</label><div class="control" id="cc-holder"></div></div>
               </div>
               <button class="paybtn" type="button"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Pay ${amt}</button>
+              <p class="payerr" role="alert"></p>
             </div>
 
             <div class="pane" id="nb">
@@ -362,7 +445,9 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
               <div class="fields"><div class="grid2">
                 ${NB_BANKS.map((b, i) => `<button class="opt${i === 0 ? ' sel' : ''}" type="button" data-code="${esc(b.code)}">${rowLogo(nbIcon(b.icon), 'optlogo')}${esc(b.name)}</button>`).join('')}
               </div></div>
+              <div class="cfslot" id="nb-slot" aria-hidden="true"></div>
               <button class="paybtn" type="button">Continue with Net Banking</button>
+              <p class="payerr" role="alert"></p>
             </div>
 
             <div class="pane" id="wallet">
@@ -373,7 +458,9 @@ function MARKUP(o: CheckoutOpts, theme: string | null): string {
                 </div>
                 <div class="field wphone-field"><label>Mobile number</label><div class="control"><input class="wphone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" aria-label="Mobile number"></div></div>
               </div>
+              <div class="cfslot" id="wallet-slot" aria-hidden="true"></div>
               <button class="paybtn" type="button">Continue with Wallets</button>
+              <p class="payerr" role="alert"></p>
             </div>
           </div>
         </div>
@@ -389,22 +476,22 @@ function injectStyleOnce() {
   const s = document.createElement('style')
   s.textContent = `
   #ucinpay-root{
-    --surface:#FFF;--sunk:#F5F6F8;--border:#E3E5EA;--fg:#0D0F14;--fg-muted:#3A3F4A;--fg-subtle:#5A6070;--fg-faint:#9096A0;
+    --surface:#FFF;--sunk:#F5F6F8;--field:#FFF;--border:#D4D8E0;--fg:#0D0F14;--fg-muted:#3A3F4A;--fg-subtle:#5A6070;--fg-faint:#8A90A0;
     --accent:#5B3DAF;--accent-ink:#4A2F94;--accent-contrast:#FFF;--tint:#F2EFFB;--glow:rgba(91,61,175,.15);--danger:#C0392B;
     --brand-a:#634AC0;--brand-b:#3E2782;--on:#FFF;--on-70:rgba(255,255,255,.70);--on-45:rgba(255,255,255,.46);--on-line:rgba(255,255,255,.15);
-    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --sans:"Mulish",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     --shadow:0 0 0 1px rgba(13,15,20,.04),0 14px 34px -14px rgba(13,15,20,.20),0 54px 70px -56px rgba(62,39,130,.45);
     position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;padding:24px 16px;
     font-family:var(--sans);color:var(--fg);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;
   }
   @media (prefers-color-scheme:dark){ #ucinpay-root:not([data-theme="light"]){
-    --surface:#141519;--sunk:#0D0E11;--border:#272930;--fg:#EDEFF3;--fg-muted:#C4C8D2;--fg-subtle:#9096A2;--fg-faint:#666C77;
+    --surface:#141519;--sunk:#0D0E11;--field:#1F2330;--border:#3C4150;--fg:#EDEFF3;--fg-muted:#CBD0DB;--fg-subtle:#A6ACBC;--fg-faint:#8B93A4;
     --accent:#AC94F1;--accent-ink:#C6B6F7;--accent-contrast:#0D0A1A;--tint:#1A1730;--glow:rgba(140,110,244,.24);
     --brand-a:#553AA6;--brand-b:#2C1B54;--shadow:0 0 0 1px rgba(255,255,255,.045),0 20px 46px -16px rgba(0,0,0,.66),0 64px 84px -60px rgba(140,110,244,.42);
   }}
   #ucinpay-root[data-theme="dark"]{
-    --surface:#141519;--sunk:#0D0E11;--border:#272930;--fg:#EDEFF3;--fg-muted:#C4C8D2;--fg-subtle:#9096A2;--fg-faint:#666C77;
+    --surface:#141519;--sunk:#0D0E11;--field:#1F2330;--border:#3C4150;--fg:#EDEFF3;--fg-muted:#CBD0DB;--fg-subtle:#A6ACBC;--fg-faint:#8B93A4;
     --accent:#AC94F1;--accent-ink:#C6B6F7;--accent-contrast:#0D0A1A;--tint:#1A1730;--glow:rgba(140,110,244,.24);
     --brand-a:#553AA6;--brand-b:#2C1B54;--shadow:0 0 0 1px rgba(255,255,255,.045),0 20px 46px -16px rgba(0,0,0,.66),0 64px 84px -60px rgba(140,110,244,.42);
   }
@@ -440,30 +527,36 @@ function injectStyleOnce() {
   #ucinpay-root .contact svg.i{width:15px;height:15px;color:var(--fg-faint)}
   #ucinpay-root .contact .em{color:var(--fg);font-weight:550}
   #ucinpay-root .body{flex:1;display:flex;min-height:398px}
-  #ucinpay-root .rail{width:156px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:2px;background:var(--sunk)}
+  #ucinpay-root .rail{width:174px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:2px;background:var(--sunk)}
   #ucinpay-root .rlabel{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-faint);padding:6px 10px 8px}
-  #ucinpay-root .ritem{display:flex;align-items:center;gap:11px;padding:11px;border:0;background:transparent;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:550;color:var(--fg-subtle);text-align:left;position:relative;transition:background .14s,color .14s}
+  #ucinpay-root .ritem{display:flex;align-items:center;gap:10px;padding:11px 10px;border:0;background:transparent;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:550;color:var(--fg-subtle);text-align:left;position:relative;white-space:nowrap;transition:background .14s,color .14s}
+  #ucinpay-root .ritem svg.i{flex-shrink:0}
   #ucinpay-root .ritem:hover{background:rgba(0,0,0,.03);color:var(--fg)}
   #ucinpay-root[data-theme="dark"] .ritem:hover{background:rgba(255,255,255,.04)}
   #ucinpay-root .ritem.on{background:var(--surface);color:var(--accent);font-weight:640;box-shadow:0 1px 2px rgba(13,15,20,.07)}
   #ucinpay-root .ritem.on::before{content:"";position:absolute;left:-8px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
-  #ucinpay-root .ritem .tag{margin-left:auto;font-size:8px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--accent);padding:2px 5px;border-radius:4px}
+  #ucinpay-root .ritem .tag{margin-left:auto;flex-shrink:0;font-size:7.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--accent);padding:2px 5px;border-radius:4px}
   #ucinpay-root .content{flex:1;min-width:0;padding:22px 22px 24px;display:flex;flex-direction:column}
   #ucinpay-root .chead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;min-height:22px}
   #ucinpay-root .chead h3{margin:0;font-size:15px;font-weight:660;letter-spacing:-.2px}
-  #ucinpay-root .nets{display:flex;align-items:center;gap:6px}
+  #ucinpay-root .nets{display:flex;align-items:center;gap:6px;margin-right:24px}
   #ucinpay-root .netlogo{height:21px;width:auto;display:block}
   #ucinpay-root .pane{display:none;flex:1;flex-direction:column} #ucinpay-root .pane.on{display:flex}
   #ucinpay-root .fields{flex:1}
   #ucinpay-root .field{margin-bottom:13px} #ucinpay-root .field:last-of-type{margin-bottom:0}
   #ucinpay-root .field label{display:block;font-size:10px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-subtle);margin-bottom:7px}
   #ucinpay-root .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  #ucinpay-root .control{display:flex;align-items:center;gap:8px;height:44px;background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;padding:0 12px;transition:border-color .15s,box-shadow .15s,background .15s}
+  #ucinpay-root .control{display:flex;align-items:center;gap:8px;height:46px;background:var(--field);border:1.5px solid var(--border);border-radius:10px;padding:0 13px;transition:border-color .15s,box-shadow .15s,background .15s}
   #ucinpay-root .control.foc,#ucinpay-root .control:focus-within{border-color:var(--accent);box-shadow:0 0 0 3.5px var(--glow);background:var(--surface)}
-  #ucinpay-root .control input{flex:1;border:0;outline:0;background:transparent;color:var(--fg);font-family:var(--mono);font-size:13.5px;letter-spacing:.01em;min-width:0;height:100%}
+  #ucinpay-root .control input{flex:1;border:0;outline:0;background:transparent;color:var(--fg);font-family:var(--sans);font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:0;min-width:0;height:100%}
   #ucinpay-root .control input::placeholder{color:var(--fg-faint)}
-  #ucinpay-root .control[id^="cc-"]{display:block;padding:0 12px}
-  #ucinpay-root .control[id^="cc-"] > *{height:100%}
+  /* Elements iframes: keep the box flex-centered (base .control) so the field text sits
+     on the vertical centre-line; the iframe just fills the width. */
+  #ucinpay-root .control[id^="cc-"],#ucinpay-root .control#upi-vpa{padding:0 13px}
+  #ucinpay-root .control[id^="cc-"] > *,#ucinpay-root .control#upi-vpa > *{flex:1;min-width:0}
+  #ucinpay-root .cfslot{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
+  #ucinpay-root .payerr{display:none;margin:10px 2px 0;font-size:12px;line-height:1.5;color:var(--danger)}
+  #ucinpay-root .payerr.on{display:block}
   #ucinpay-root .paybtn{width:100%;margin-top:18px;height:46px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;cursor:pointer;background:var(--accent);color:var(--accent-contrast);font-family:inherit;font-size:14px;font-weight:640;letter-spacing:-.1px;transition:filter .14s,transform .08s}
   #ucinpay-root .paybtn:hover{filter:brightness(1.05)} #ucinpay-root .paybtn:active{transform:translateY(1px)} #ucinpay-root .paybtn:disabled{opacity:.65;cursor:default} #ucinpay-root .paybtn svg.i{width:15px;height:15px}
   #ucinpay-root .qrwrap{display:flex;gap:20px;align-items:center}
@@ -475,10 +568,10 @@ function injectStyleOnce() {
   #ucinpay-root .upiid{display:flex;flex-direction:column;gap:11px} #ucinpay-root .upiid .control{width:100%}
   #ucinpay-root .verify{width:100%;height:46px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:11px;cursor:pointer;font-family:inherit;font-weight:640;background:var(--accent);color:var(--accent-contrast);font-size:14px;padding:0 16px;white-space:nowrap;transition:filter .14s,transform .08s} #ucinpay-root .verify:hover{filter:brightness(1.05)} #ucinpay-root .verify:active{transform:translateY(1px)} #ucinpay-root .verify:disabled{opacity:.65}
   #ucinpay-root .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  #ucinpay-root .opt{font-family:inherit;font-size:12.5px;font-weight:550;color:var(--fg-muted);background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;padding:0 13px;height:46px;display:flex;align-items:center;cursor:pointer;text-align:left;transition:border-color .14s,background .14s}
+  #ucinpay-root .opt{font-family:inherit;font-size:12.5px;font-weight:550;color:var(--fg-muted);background:var(--field);border:1.5px solid var(--border);border-radius:10px;padding:0 13px;height:46px;display:flex;align-items:center;cursor:pointer;text-align:left;transition:border-color .14s,background .14s}
   #ucinpay-root .opt.sel{border-color:var(--accent);background:var(--tint);color:var(--accent-ink)}
   #ucinpay-root .wlist{display:flex;flex-direction:column;gap:9px}
-  #ucinpay-root .wopt{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 15px;background:var(--sunk);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:550;cursor:pointer;color:var(--fg)} #ucinpay-root .wopt.sel{border-color:var(--accent);background:var(--tint)}
+  #ucinpay-root .wopt{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 15px;background:var(--field);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:550;cursor:pointer;color:var(--fg)} #ucinpay-root .wopt.sel{border-color:var(--accent);background:var(--tint)}
   #ucinpay-root .wdot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center} #ucinpay-root .wopt.sel .wdot{border-color:var(--accent)} #ucinpay-root .wopt.sel .wdot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
   #ucinpay-root .soon{font-size:12.5px;color:var(--fg-subtle)}
   #ucinpay-root .wphone-field{margin-top:13px}
